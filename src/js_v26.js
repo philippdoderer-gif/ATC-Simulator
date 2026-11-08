@@ -14,8 +14,8 @@ const css=`.wz-p{display:flex;gap:6px;align-items:center;margin:8px 0 6px;flex-w
 .wz-n button{border-radius:99px;padding:13px 24px;font:700 16px var(--disp);cursor:pointer;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:#f3efe7}
 .wz-n button.nx{background:linear-gradient(135deg,#ffb23e,#ff8a3d)!important;color:#1b1203!important;border:0;box-shadow:0 12px 30px -12px rgba(255,150,50,.8)}
 .st-off{display:none!important}
-#apc.cards{grid-template-columns:1fr!important;max-width:760px}
-#apc .mr .fl{font-size:11px}`;
+#apc.cards{grid-template-columns:1fr!important}
+@media(max-width:560px){#apc .mr{gap:6px}#apc .mr .fl{font-size:9.5px;gap:1px}#apc .mh b{font-size:21px}}`;
 const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
 const prog=document.createElement('div');prog.className='wz-p';S.insertBefore(prog,S.firstChild);
 const nav=document.createElement('div');nav.className='wz-n';S.appendChild(nav);
