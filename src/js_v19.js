@@ -6,7 +6,7 @@
 // ===================== v19 layout: aircraft list as strip bar / left column, map sized to the viewport, 3-column console on wide screens =====================
 (()=>{const st=document.createElement('style');st.textContent=`
 @media(min-width:820px){#game .left{display:flex;justify-content:center;background:#050c17;border-radius:18px;position:sticky;top:8px;align-self:start}canvas#cv{aspect-ratio:auto}}
-@media(min-width:1280px){
+@media(min-width:1100px){
  .wrap:has(#game:not([hidden])){max-width:1900px}
  #game .gwrap.tri{grid-template-columns:260px minmax(0,1fr) 410px;grid-template-rows:auto auto auto auto;align-items:start}
  #game .gwrap.tri #strBar{grid-column:1;grid-row:1/span 4;position:sticky;top:8px;margin:0;max-height:calc(100dvh - 16px);overflow:auto}
@@ -21,10 +21,11 @@
  #game .gwrap.tri.hasCfb{grid-template-rows:auto auto auto}
  #game .gwrap.tri.hasCfb .left{grid-column:2;grid-row:1}
  #game .gwrap.tri.hasCfb .right{grid-column:3;grid-row:1/span 4}
-}`;document.head.appendChild(st);
+}
+@media(min-width:1100px) and (max-width:1279px){#game .gwrap.tri{grid-template-columns:220px minmax(0,1fr) 360px;gap:8px}#game .gwrap.tri #strBar{padding:8px}#game .gwrap.tri #strBar .strip2{padding:4px 6px}}`;document.head.appendChild(st);
  const layout=()=>{try{const gm=$('game');if(gm.hidden)return;const g=gm.querySelector('.gwrap'),sp=$('strips').closest('.panel'),R=gm.querySelector('.right');if(!g||!sp)return;sp.id='strBar';
   const sq=$('seq'),help=$('help');
-  const tri=innerWidth>=1280;
+  const tri=innerWidth>=1100;
   if(tri){if(sp.parentNode!==g||g.firstElementChild!==sp)g.prepend(sp);g.classList.add('tri');if(sq&&sq.parentNode!==sp)sp.appendChild(sq);}
   else{g.classList.remove('tri');if(sp.parentNode===g||sp.nextElementSibling!==g)g.before(sp);if(sq&&sq.parentNode!==R)R.insertBefore(sq,help);}}catch(e){}};
  const _u=ui;ui=function(){_u();layout()};setInterval(layout,500);window.addEventListener('resize',layout);

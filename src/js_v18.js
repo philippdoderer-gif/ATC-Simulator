@@ -20,9 +20,9 @@
 // ---- Center: "Fill in the blanks" moves below the radar as a wide strip (desktop/tablet); the right column gets more room
 {const st=document.createElement('style');st.textContent=`@media(min-width:820px){#cfb{grid-column:1;padding:8px 10px}#cfb .cgl{margin:0 0 6px}#cfb .clz{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:6px}#cfb .clz form{flex-wrap:wrap;white-space:normal;padding:4px 8px;gap:6px}#cfb .clz form button{margin-left:auto}#cfb{padding:6px 10px}#cfb input,#cfb select{min-width:0}.gwrap.hasCfb{grid-template-rows:auto 1fr}.gwrap.hasCfb .left{grid-column:1;grid-row:1;align-self:start}.gwrap.hasCfb .right{grid-column:2;grid-row:1/span 2}#cfb{grid-row:2;align-self:start}}`;document.head.appendChild(st);
  const _cb=ctrBox;ctrBox=function(){_cb();try{const b=$('ctrb'),g=document.querySelector('#game .gwrap');let f=$('cfb');
-  const c=b&&innerWidth>=820?b.querySelector('.clz'):null;
+  const c=b&&innerWidth>=1280?b.querySelector('.clz'):null;
   if(c){if(!f){f=document.createElement('div');f.id='cfb';f.className='panel';g.appendChild(f)}f.hidden=false;const hd=c.previousElementSibling;f.innerHTML='';if(hd&&hd.classList.contains('cgl'))f.append(hd);f.append(c);g.classList.add('hasCfb')}
-  else if(f&&(MODE!=='C'||CTR.id==='none'||innerWidth<820)){f.hidden=true;f.innerHTML='';g.classList.remove('hasCfb')}}catch(e){console.warn(e)}}}
+  else if(f&&(MODE!=='C'||CTR.id==="none"||innerWidth<1280)){f.hidden=true;f.innerHTML='';g.classList.remove('hasCfb')}}catch(e){console.warn(e)}}}
 // ---- Center: compact command menu: category chips (Approach / Heading / Waypoints / Altitude / Speed / Info), options shown for one category at a time
 const CMP={k:'Heading'};
 if(SET.desel===undefined)SET.desel=true;
