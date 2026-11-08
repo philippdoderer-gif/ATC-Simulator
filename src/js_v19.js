@@ -33,10 +33,12 @@
 
 // ---- radio overlay on the map: latest calls fade out after a while (full history stays in the log panel)
 (()=>{const L=document.querySelector('#game .left'),log=$('log');if(!L||!log)return;const ov=document.createElement('div');ov.id='mapLog';L.appendChild(ov);
- const st=document.createElement('style');st.textContent='#mapLog{position:absolute;left:10px;bottom:30px;width:min(58%,480px);display:none;flex-direction:column;gap:3px;pointer-events:none;z-index:3}@media(min-width:820px){#mapLog{display:flex}}#mapLog div{font:500 12px/1.3 system-ui;padding:4px 8px;border-radius:8px;background:rgba(6,11,20,.72);backdrop-filter:blur(4px);color:#cfe3ff;transition:opacity .6s;border-left:3px solid #35507a}#mapLog .plt{color:#8ff0d6;border-left-color:#5eead4}#mapLog .atc{color:#bfe6ff;border-left-color:#4cc9f0}';document.head.appendChild(st);
+ const st=document.createElement('style');st.textContent='#mapLog{position:absolute;left:10px;bottom:30px;width:min(58%,480px);display:none;flex-direction:column;gap:3px;pointer-events:none;z-index:3}#mapLog div{font:500 12px/1.3 system-ui;padding:4px 8px;border-radius:8px;background:rgba(6,11,20,.72);backdrop-filter:blur(4px);color:#cfe3ff;transition:opacity .6s;border-left:3px solid #35507a}#mapLog .plt{color:#8ff0d6;border-left-color:#5eead4}#mapLog .atc{color:#bfe6ff;border-left-color:#4cc9f0}';document.head.appendChild(st);
  const seen=new WeakSet();const sync=()=>{const kids=[...log.children].slice(-3);for(const k of kids){if(seen.has(k))continue;seen.add(k);const d=document.createElement('div');d.className=k.className;d.textContent=k.textContent;d.dataset.t=Date.now();ov.appendChild(d)}
   while(ov.children.length>3)ov.firstChild.remove()};
  new MutationObserver(sync).observe(log,{childList:true});
  setInterval(()=>{const n=Date.now();for(const d of [...ov.children]){const a=n-(+d.dataset.t);if(a>16000)d.remove();else d.style.opacity=a>11000?.25:1}},1000)})();
 // ---- duplicate command labels (e.g. two identical "Vacate via B10") are shown once
 {const _ud=ui;ui=function(){_ud();try{const c=$('ctl');if(!c)return;for(const cb of c.querySelectorAll('.cb')){const seen=new Set();for(const b of [...cb.children]){const t=b.textContent.trim();if(b.tagName==='BUTTON'&&/^Vacate via /.test(t)){if(seen.has(t))b.remove();else seen.add(t)}}}}catch(e){}}}
+// ---- no text overlays on the map (radio calls stay in the log panel; legend line hidden)
+{const st=document.createElement('style');st.textContent='#mapLog,#lgd,.legend{display:none!important}';document.head.appendChild(st)}

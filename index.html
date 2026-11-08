@@ -1595,13 +1595,45 @@ infoOpen=innerWidth>=820;
 
 // ---- radio overlay on the map: latest calls fade out after a while (full history stays in the log panel)
 (()=>{const L=document.querySelector('#game .left'),log=$('log');if(!L||!log)return;const ov=document.createElement('div');ov.id='mapLog';L.appendChild(ov);
- const st=document.createElement('style');st.textContent='#mapLog{position:absolute;left:10px;bottom:30px;width:min(58%,480px);display:none;flex-direction:column;gap:3px;pointer-events:none;z-index:3}@media(min-width:820px){#mapLog{display:flex}}#mapLog div{font:500 12px/1.3 system-ui;padding:4px 8px;border-radius:8px;background:rgba(6,11,20,.72);backdrop-filter:blur(4px);color:#cfe3ff;transition:opacity .6s;border-left:3px solid #35507a}#mapLog .plt{color:#8ff0d6;border-left-color:#5eead4}#mapLog .atc{color:#bfe6ff;border-left-color:#4cc9f0}';document.head.appendChild(st);
+ const st=document.createElement('style');st.textContent='#mapLog{position:absolute;left:10px;bottom:30px;width:min(58%,480px);display:none;flex-direction:column;gap:3px;pointer-events:none;z-index:3}#mapLog div{font:500 12px/1.3 system-ui;padding:4px 8px;border-radius:8px;background:rgba(6,11,20,.72);backdrop-filter:blur(4px);color:#cfe3ff;transition:opacity .6s;border-left:3px solid #35507a}#mapLog .plt{color:#8ff0d6;border-left-color:#5eead4}#mapLog .atc{color:#bfe6ff;border-left-color:#4cc9f0}';document.head.appendChild(st);
  const seen=new WeakSet();const sync=()=>{const kids=[...log.children].slice(-3);for(const k of kids){if(seen.has(k))continue;seen.add(k);const d=document.createElement('div');d.className=k.className;d.textContent=k.textContent;d.dataset.t=Date.now();ov.appendChild(d)}
   while(ov.children.length>3)ov.firstChild.remove()};
  new MutationObserver(sync).observe(log,{childList:true});
  setInterval(()=>{const n=Date.now();for(const d of [...ov.children]){const a=n-(+d.dataset.t);if(a>16000)d.remove();else d.style.opacity=a>11000?.25:1}},1000)})();
 // ---- duplicate command labels (e.g. two identical "Vacate via B10") are shown once
 {const _ud=ui;ui=function(){_ud();try{const c=$('ctl');if(!c)return;for(const cb of c.querySelectorAll('.cb')){const seen=new Set();for(const b of [...cb.children]){const t=b.textContent.trim();if(b.tagName==='BUTTON'&&/^Vacate via /.test(t)){if(seen.has(t))b.remove();else seen.add(t)}}}}catch(e){}}}
+// ---- no text overlays on the map (radio calls stay in the log panel; legend line hidden)
+{const st=document.createElement('style');st.textContent='#mapLog,#lgd,.legend{display:none!important}';document.head.appendChild(st)}
+// ===================== v20: main menu as a one-screen launcher =====================
+(()=>{const S=$('setup');if(!S||S.dataset.v20)return;S.dataset.v20=1;
+ const kids=[...S.children];const A=document.createElement('div'),B=document.createElement('div');A.id='setA';B.id='setB2';
+ // column A: airport + position; column B: time, challenge, start
+ const idx=id=>kids.findIndex(k=>k.id===id||k.querySelector&&k.querySelector('#'+id));
+ const hs=kids.filter(k=>k.tagName==='H3');
+ const colA=[hs[0],$('apc'),hs[1],$('mdc'),$('xtra')];
+ const top=document.createElement('div');top.id='setTop';
+ const first=kids.indexOf(hs[0]);kids.slice(0,first).forEach(k=>top.appendChild(k));
+ for(const k of kids){if(top.contains(k))continue;(colA.includes(k)?A:B).appendChild(k)}
+ S.appendChild(top);S.appendChild(A);S.appendChild(B);
+ const st=document.createElement('style');st.textContent=`
+ #setA h3:first-child,#setB2 h3:first-child{margin-top:0}
+ @media(min-width:1000px){
+  .shero{padding-block:14px 12px;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+  .shero h1{font-size:clamp(28px,2.7vw,40px);max-width:none}
+  .shero .sub,.shero .shl>div:not(.eyebrow){display:none}
+  .strip{transform:scale(.8) rotate(-1deg);transform-origin:right center}
+  #setup{display:grid!important;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:26px;align-items:start}
+  #setA .cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  #setA #mdc{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  #setA #mdc .card .cd,#setA #mdc .card small{font-size:11px}
+  #setTop{grid-column:1/-1}#setTop:empty{display:none}
+  #setB2{position:sticky;top:12px}
+  #tsel .tsc{height:70px}
+  #tsel{padding:10px 12px}
+ }
+ @media(min-width:1000px) and (max-height:820px){#setA .card canvas,#setA .card svg{max-height:96px}}
+ `;document.head.appendChild(st);
+})();
 
 // ===================== Center: draft steppers, typed instructions, fill-in phrases =====================
 const FX=()=>Object.keys(WP).filter(n=>!/^(IF|FA)/.test(n)).sort();
