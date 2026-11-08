@@ -31,7 +31,7 @@ function go(p,scroll){p=ALIAS[p]||p;if(!MAP[p])p='play';cur=p;
 window.goPage=go;
 menu.addEventListener('click',e=>{const a=e.target.closest('a[href^="#"]');if(!a)return;const id=a.getAttribute('href').slice(1);
  const p=ALIAS[id]||(MAP[id]?id:null);if(!p)return;e.preventDefault();go(p);
- if(id==='start'||id==='setup'){const t=document.getElementById('start');if(t)setTimeout(()=>t.scrollIntoView({block:'center'}),30)}});
+});
 window.addEventListener('popstate',()=>go(location.hash.slice(1)||'play',false));
 // footer link to start on every page
 const ft=q('.sfoot');

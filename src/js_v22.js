@@ -45,8 +45,8 @@ function gen(k,m){
   out.push({t,n,dir:m,alk:al,dc:dest,num:+n.split(' ')[1],al:AIRL[al].r,dest:DEST[dest]?DEST[dest].c:dest,late,g,belt:1+(rn()*9|0)});}
  cache[key]=out;return out}
 function status(f,now,m){const t=f.t+f.late,d=t-now;
- if(m==='D'){if(d<-1)return['Departed','st-na'];if(d<=8)return['Gate closing','st-go'];if(d<=35)return['Boarding','st-go'];if(f.late)return['Late '+String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0'),'st-late'];return['On time','st-ok']}
- if(d<=-6)return['Belt '+f.belt,'st-ok'];if(d<=0)return['Landed','st-ok'];if(f.late)return['Late '+String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0'),'st-late'];if(d<=25)return['Approaching','st-go'];return['Expected','st-na']}
+ if(m==='D'){if(d<-1)return['Departed','st-na'];if(d<=8)return['Last call','st-go'];if(d<=35)return['Boarding','st-go'];if(f.late)return['Late '+String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0'),'st-late'];return['On time','st-ok']}
+ if(d<=-6)return['Belt '+f.belt,'st-ok'];if(d<=0)return['Landed','st-ok'];if(f.late)return['Late '+String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0'),'st-late'];if(d<=25)return['Approach','st-go'];return['Expected','st-na']}
 function cells(txt,len,cls,key){const s=(txt+' '.repeat(len)).slice(0,len).toUpperCase(),p=prev[key]||'';prev[key]=s;
  return '<span class="fl '+(cls||'')+'">'+[...s].map((c,i)=>`<span class="fc${p[i]!==c&&p?' f':''}">${c===' '?'&nbsp;':c.replace('&','&amp;')}</span>`).join('')+'</span>'}
 const hm=t=>String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
