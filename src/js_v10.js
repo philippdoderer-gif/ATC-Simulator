@@ -105,12 +105,13 @@ const _brief=briefing;briefing=function(){_brief();const el=$('brief');if(!el)re
  const rows=el.querySelectorAll('table.bt')[0];if(rows){const tr=rows.querySelectorAll('tr');tr.forEach((r,i)=>{if(!i)return;const td=r.querySelectorAll('td');if(td.length<3)return;const arr=+td[1].textContent.replace(/\D/g,''),dep=+td[2].textContent;td[2].textContent='≈ '+Math.round(dep+(i===1?.4:.85)*arr)})}
  const p=el.querySelector('section.wide p.dim');if(p)p.textContent='Departures include aircraft already on stand plus expected turnarounds of arriving aircraft.'};
 // --- drawing overlay (before aircraft)
+let RT=1;const selFix=()=>sel&&sel.ph==='air'?(sel.dep?(sel.ex&&sel.ex[0]):sel.fix):null;
 window.preAc=function(X,Y,k,Rg,W){
  if(MODE==='C'){ // SIDs/STARs (schematic) + weather
   cx.save();cx.setLineDash([3,5]);cx.lineWidth=1;cx.font='9px system-ui';const cl2=p=>{const d=Math.hypot(p[0],p[1]),f=d>57?57/d:1;return[p[0]*f,p[1]*f]};
-  for(const id of FLW[2]){const R=RW[id];for(const e of A.ex){const p=cl2(xs(e[1]));cx.strokeStyle='rgba(255,180,84,.28)';cx.beginPath();cx.moveTo(X(R.E[0]),Y(R.E[1]));cx.lineTo(X(R.E[0]+R.dir[0]*4),Y(R.E[1]+R.dir[1]*4));cx.lineTo(X(p[0]),Y(p[1]));cx.stroke();
+  for(const id of FLW[2]){const R=RW[id];for(const e of A.ex){if(RT===0||(RT===1&&e[0]!==selFix()))continue;const p=cl2(xs(e[1]));cx.strokeStyle='rgba(255,180,84,.28)';cx.beginPath();cx.moveTo(X(R.E[0]),Y(R.E[1]));cx.lineTo(X(R.E[0]+R.dir[0]*4),Y(R.E[1]+R.dir[1]*4));cx.lineTo(X(p[0]),Y(p[1]));cx.stroke();
    if(Rg<45){const m=[(R.E[0]+p[0])/2,(R.E[1]+p[1])/2];cx.fillStyle='rgba(255,180,84,.55)';cx.fillText(sidOf({ex:[e[0]],rw:id}),X(m[0]),Y(m[1]))}}}
-  for(const id of FLW[1]){const ifp=WP['IF'+id];if(!ifp)continue;for(const e of A.ent){const p=cl2(xs(e[1]));cx.strokeStyle='rgba(94,234,212,.25)';cx.beginPath();cx.moveTo(X(p[0]),Y(p[1]));cx.lineTo(X(ifp[0]),Y(ifp[1]));cx.stroke();
+  for(const id of FLW[1]){const ifp=WP['IF'+id];if(!ifp)continue;for(const e of A.ent){if(RT===0||(RT===1&&e[0]!==selFix()))continue;const p=cl2(xs(e[1]));cx.strokeStyle='rgba(94,234,212,.25)';cx.beginPath();cx.moveTo(X(p[0]),Y(p[1]));cx.lineTo(X(ifp[0]),Y(ifp[1]));cx.stroke();
    if(Rg<45){const m=[(p[0]*.6+ifp[0]*.4),(p[1]*.6+ifp[1]*.4)];cx.fillStyle='rgba(94,234,212,.55)';cx.fillText(e[0]+' '+(1+hsh(e[0])%9)+'ABCDEFGHJKLMNPQRSTUVWXYZ'[hsh(id)%24],X(m[0]),Y(m[1]))}}}
   cx.setLineDash([]);
   for(const c of CELLS){const g=cx.createRadialGradient(X(c.x),Y(c.y),0,X(c.x),Y(c.y),c.r*k*1.6);g.addColorStop(0,'rgba(255,60,80,.55)');g.addColorStop(.45,'rgba(255,200,60,.35)');g.addColorStop(.75,'rgba(80,220,120,.18)');g.addColorStop(1,'rgba(80,220,120,0)');cx.fillStyle=g;cx.beginPath();cx.arc(X(c.x),Y(c.y),c.r*k*1.6,0,7);cx.fill();cx.fillStyle='rgba(255,220,220,.8)';cx.fillText('CB',X(c.x)-6,Y(c.y)+3)}
@@ -157,3 +158,8 @@ const _bm2=buildMenu;buildMenu=function(){_bm2();let h='';for(const k of Object.
 // --- phonetic alphabet in displayed radio calls, and the controller's "readback correct"
 (function(){const _s=say;say=function(t,k){if(k==='plt'||k==='atc')t=t.replace(/(^|[ ,(])([A-HJ-Z])(?=[ ,.)]|$)/g,(m,p,l)=>p+NATO[l]);_s(t,k)};
  const _a=atc;atc=function(a,t,r){if(a.rbp&&!a.sqr&&!/^negative/i.test(t)){t='readback correct, '+t}a.rbp=false;_a(a,t,r);if(r!==null)setTimeout(()=>{a.rbp=!a.sqr&&!a.rbw},700)}})();
+
+// route-lines toggle (Center): off / selected aircraft only / all
+{const b=document.createElement('button');b.id='rtB';const L=['Routes: off','Routes: selected','Routes: all'];const up=()=>{b.textContent=L[RT];b.style.display=MODE==='C'?'':'none'};
+ b.onclick=()=>{RT=(RT+1)%3;up()};b.style.cssText='width:auto;height:auto;padding:6px 8px;font-size:11px;line-height:1.2';
+ document.querySelector('.zb').appendChild(b);up();setInterval(up,700)}
