@@ -1541,6 +1541,8 @@ const deselAfter=()=>{if(SET.desel&&MODE==='C'&&!BATCH)setTimeout(()=>{sel=null;
   first.before(bar);bar.after(body);cbs.forEach(cb=>cb.remove());show(CMP.k)}catch(e){console.warn(e)}}}
 // ---- Center: real-radar style data block: callsign / FL + trend + ground speed / assigned values / type & destination
 function radarBlock(a,p,px,py,col,mine){
+ const small=cv.clientWidth<520;
+ if(small&&a!==sel){cx.save();cx.font='700 10px ui-monospace,Menlo,monospace';cx.fillStyle=a.rc?col:'#ffb454';cx.fillText(a.cs+(a.rc?'':' ?'),px+8,py-5);cx.restore();return}
  if(!a.rc){cx.save();cx.font='700 11px ui-monospace,Menlo,monospace';cx.fillStyle=a.req==='radar'?'#ffb454':col;cx.globalAlpha=.55+.45*(a.req==='radar'?Math.abs(Math.sin(performance.now()/350)):.4);cx.fillText(a.req==='radar'?a.cs+'  CHECK-IN':'UNKNOWN',px+10,py-6);cx.font='500 10px ui-monospace,Menlo,monospace';cx.globalAlpha=.7;cx.fillText('no radar contact',px+10,py+5);cx.restore();return}
  const fl=Math.round(p.alt/100),altT=p.alt>=5500?'FL'+pad(fl,3):String(Math.round(p.alt/100)*100),tr=a.ta>p.alt+50?'↑':a.ta<p.alt-50?'↓':'→',gs=Math.round(p.s),wk=typeof WKC==='function'?WKC(a.type):'';
  cx.save();cx.strokeStyle=col;cx.globalAlpha=.55;cx.lineWidth=1;cx.beginPath();cx.moveTo(px+4,py-4);cx.lineTo(px+9,py-9);cx.stroke();cx.globalAlpha=1;
@@ -1554,7 +1556,7 @@ function radarBlock(a,p,px,py,col,mine){
 infoOpen=innerWidth>=820;
 {const st=document.createElement('style');st.textContent=`#strBar{margin:0 0 8px;padding:6px 8px;overflow:hidden}#strBar .strips{display:block}#strBar .bays{display:flex;flex-wrap:nowrap;gap:12px;overflow-x:auto;padding-bottom:4px;align-items:stretch;-webkit-overflow-scrolling:touch}
 #strBar .bay{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;flex:0 0 auto;border:1px dashed var(--line);border-radius:12px;padding:4px 8px;min-height:54px}
-#strBar .bh{display:flex;flex-direction:column;gap:2px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);min-width:64px}#strBar .strip2{flex:0 0 auto;width:auto;min-width:130px;margin:0}`;document.head.appendChild(st)}
+#strBar .bh{display:flex;flex-direction:column;gap:2px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);min-width:64px}#strBar .strip2{flex:0 0 auto;width:auto;min-width:130px;margin:0}`;document.head.appendChild(st);const s2=document.createElement('style');s2.textContent='@media(max-width:819px){#strBar{padding:4px 6px;margin-bottom:4px}#strBar .bh{min-width:0;flex-direction:row;align-items:center}#strBar .bh span{display:none}#strBar .bay{min-height:0;padding:2px 6px}#strBar .strip2{min-width:0;padding:4px 6px}#strBar .s2{display:none}#strBar .grip{display:none}}';document.head.appendChild(s2)}
 // aircraft list (Center): full-width horizontal strip bar between the stats and the radar
 {const _u2=ui;ui=function(){_u2();try{const sp=$('strips').closest('.panel'),g=document.querySelector('#game .gwrap');if(!sp||!g)return;
   if(MODE==='C'){if(sp.id!=='strBar'||sp.nextElementSibling!==g){sp.id='strBar';g.before(sp)}}
