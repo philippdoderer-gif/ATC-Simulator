@@ -99,7 +99,7 @@ function init(){A=AP[ap];D=DATA[ap];LL=ll(A.arp);flow=FORCEFLOW||(Math.random()<
  ac=[];sel=null;score=0;land=0;dpt=0;viol=0;pairs=new Set();spT=3;burst=0;logs=[];$('log').innerHTML='';psig='\u0000';
  $('ttl').innerHTML=ap+' '+A.icao+' <small>'+MODES[MODE][0]+' · RWY '+FLW[1].join('/')+' in use</small>';$('help').textContent=MODES[MODE][1];
  const VRG=[Math.min(g.r,2.2),.12,Math.min(g.r,2.2)*2.2];VR.G=VRG;VR.T=[g.r*1.2,.12,30];
- view={x:0,y:0,r:VR[MODE][0]};if(MODE!=='C'){view.x=g.c[0];view.y=g.c[1]}if(MODE==='T'){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const id of FLW[1].concat(FLW[2])){const R=RW[id];for(const p of[[R.T0.x,R.T0.y],R.E]){x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1])}}view.x=(x0+x1)/2;view.y=(y0+y1)/2;view.r=Math.max(x1-x0,y1-y0)/2*1.18+.25}
+ view={x:0,y:0,r:VR[MODE][0]};if(MODE!=='C'){view.x=g.c[0];view.y=g.c[1]}if(MODE==='T'){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const id of FLW[1].concat(FLW[2])){const R=RW[id];for(const p of[[R.T0.x,R.T0.y],R.E]){x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1])}}view.x=(x0+x1)/2;view.y=(y0+y1)/2;view.r=Math.max(x1-x0,y1-y0)/2*1.3+.3}
  $('lgd').textContent=MODE==='C'?'Rings in NM · SIDs/STARs schematic':'Map data © OpenStreetMap contributors (ODbL)';
  populate();ovfSpawn(0,2);
  say('Shift started at '+ap+'. ATIS information '+ATIS.l+' is current.');ui();briefing()}
