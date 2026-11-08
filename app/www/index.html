@@ -1551,8 +1551,14 @@ function radarBlock(a,p,px,py,col,mine){
 
 // ---- Center: overflights also check in on the frequency; aircraft list sits at the top of the right column
 {const _st=step;step=function(dt){_st(dt);try{if(MODE==='C'||CMB||HS('C'))for(const a of ac){if(a.ovf&&a.ph==='air'&&a.ctrl==='C'&&!a.rc&&!a.cki){if(a.cdl==null)a.cdl=T+4+Math.random()*30;if(T>=a.cdl){a.cki=1;ask(a,'radar','flight level '+Math.round(a.fl)+', via '+(a.ex?a.ex[0]:'')+'.')}}}}catch(e){}}}
-{const _u2=ui;ui=function(){_u2();try{const R=document.querySelector('#game .right'),sp=$('strips').closest('.panel');if(!R||!sp)return;
-  if(MODE==='C'&&R.firstElementChild!==sp)R.prepend(sp);else if(MODE!=='C'&&sp.previousElementSibling&&$('seq')&&sp.nextElementSibling!==$('seq'))R.insertBefore(sp,$('seq'))}catch(e){}}}
+infoOpen=innerWidth>=820;
+{const st=document.createElement('style');st.textContent=`#strBar{margin:0 0 8px;padding:6px 8px;overflow:hidden}#strBar .strips{display:block}#strBar .bays{display:flex;flex-wrap:nowrap;gap:12px;overflow-x:auto;padding-bottom:4px;align-items:stretch;-webkit-overflow-scrolling:touch}
+#strBar .bay{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;flex:0 0 auto;border:1px dashed var(--line);border-radius:12px;padding:4px 8px;min-height:54px}
+#strBar .bh{display:flex;flex-direction:column;gap:2px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);min-width:64px}#strBar .strip2{flex:0 0 auto;width:auto;min-width:130px;margin:0}`;document.head.appendChild(st)}
+// aircraft list (Center): full-width horizontal strip bar between the stats and the radar
+{const _u2=ui;ui=function(){_u2();try{const sp=$('strips').closest('.panel'),g=document.querySelector('#game .gwrap');if(!sp||!g)return;
+  if(MODE==='C'){if(sp.id!=='strBar'||sp.nextElementSibling!==g){sp.id='strBar';g.before(sp)}}
+  else if(sp.id==='strBar'){sp.id='';const R=document.querySelector('#game .right');R.insertBefore(sp,$('seq')||null)}}catch(e){}}}
 
 // ===================== Center: draft steppers, typed instructions, fill-in phrases =====================
 const FX=()=>Object.keys(WP).filter(n=>!/^(IF|FA)/.test(n)).sort();
