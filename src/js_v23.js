@@ -55,17 +55,9 @@ const css=`#profPage{position:fixed;inset:0;z-index:9000;overflow:auto;backgroun
 .pf-rs{background:none;border:0;color:#8d97b4;font-size:12px;text-decoration:underline;cursor:pointer;margin-top:14px}
 @media(max-width:820px){.pf{grid-template-columns:1fr}}`;
 const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
-const page=document.createElement('div');page.id='profPage';page.hidden=true;
-page.innerHTML='<div class="pp-top"><button id="ppBack" type="button">‹ Back to menu</button><span>Pilot profile</span></div><div class="pp-in"><section id="prof"></section></div>';
-document.body.appendChild(page);const sec=page.querySelector('#prof');
-const nl=document.querySelector('.slinks');let pl=null;if(nl){pl=Object.assign(document.createElement('a'),{href:'#profile',textContent:'Profile'});nl.insertBefore(pl,nl.children[0])}
-function openP(){render();page.hidden=false;document.documentElement.style.overflow='hidden';page.scrollTop=0;if(location.hash!=='#profile')history.pushState(null,'','#profile')}
-function closeP(){page.hidden=true;document.documentElement.style.overflow='';if(location.hash==='#profile')history.replaceState(null,'',location.pathname+location.search)}
-const hb=document.querySelector('.hbtns');if(hb){const b=document.createElement('a');b.href='#profile';b.className='ghost';b.textContent='My profile';b.addEventListener('click',e=>{e.preventDefault();openP()});hb.appendChild(b)}
-if(pl)pl.addEventListener('click',e=>{e.preventDefault();openP()});
-page.querySelector('#ppBack').onclick=closeP;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!page.hidden)closeP()});
-window.addEventListener('popstate',()=>{if(location.hash==='#profile')openP();else if(!page.hidden){page.hidden=true;document.documentElement.style.overflow=''}});
-window.openProfile=openP;
+const sec=document.createElement('section');sec.className='ss';sec.id='prof';const bd0=document.getElementById('board');bd0.parentNode.insertBefore(sec,bd0.nextSibling);
+const hb=document.querySelector('.hbtns');if(hb){const b=document.createElement('a');b.href='#profile';b.className='ghost';b.textContent='My profile';hb.appendChild(b)}
+window.profRender=()=>render();
 const MN={G:'Ground',T:'Tower',C:'Center',X:'Tower+Ground'},AN={MUC:'Munich',FRA:'Frankfurt',LHR:'Heathrow'};
 function render(){const p=ld();let nm='';try{nm=localStorage.getItem('atc_name')||''}catch(e){}
  const ri=rankOf(p.tot.xp),nx=RANKS[ri+1],cur=RANKS[ri][0],pc=nx?Math.round((p.tot.xp-cur)/(nx[0]-cur)*100):100;
@@ -84,5 +76,5 @@ function render(){const p=ld();let nm='';try{nm=localStorage.getItem('atc_name')
  cp.onclick=()=>{if(imp){try{const o=JSON.parse(decodeURIComponent(escape(atob(tx.value.trim()))));if(!o.tot)throw 0;sv(o);render()}catch(e){alert('This code is not a valid profile.')}}else{tx.select();try{navigator.clipboard.writeText(tx.value);cp.textContent='Copied'}catch(e){document.execCommand('copy')}}};
  document.getElementById('pfIm').onclick=()=>{imp=true;tx.hidden=false;cp.hidden=false;cp.textContent='Load this profile';tx.value='';tx.placeholder='Paste your profile code here';tx.focus()};
  document.getElementById('pfRs').onclick=()=>{if(confirm('Delete all profile statistics on this device?')){try{localStorage.removeItem(KEY)}catch(e){}render()}}}
-render();if(location.hash==='#profile')openP();
+render();
 })();

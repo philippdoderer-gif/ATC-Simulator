@@ -55,7 +55,7 @@ body:has(#menu:not([hidden])){background:
 #menu .go:hover{transform:translateY(-2px);box-shadow:0 28px 60px -18px rgba(255,150,50,.95)}
 #menu select,#menu #xtra button{border-radius:12px}
 #menu #xtra{border-radius:22px;border:1px solid var(--m-line);background:rgba(255,255,255,.025)}
-#menu button.on{background:rgba(255,178,62,.18)!important;border-color:var(--m-amber)!important}
+#menu button.on{background:rgba(255,178,62,.18)!important;border-color:var(--m-amber)!important;color:#ffe9c4!important}
 /* info sections */
 #menu .ss{border-top:0;margin-top:56px;padding-top:0}
 #menu .ss h2{font-size:38px;letter-spacing:-.01em}
