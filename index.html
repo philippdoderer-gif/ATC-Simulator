@@ -839,7 +839,7 @@ const loadV=()=>{try{let v=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.l
 const NATO={A:'Alpha',B:'Bravo',C:'Charlie',D:'Delta',E:'Echo',F:'Foxtrot',G:'Golf',H:'Hotel',I:'India',J:'Juliett',K:'Kilo',L:'Lima',M:'Mike',N:'November',O:'Oscar',P:'Papa',Q:'Quebec',R:'Romeo',S:'Sierra',T:'Tango',U:'Uniform',V:'Victor',W:'Whiskey',X:'X-ray',Y:'Yankee',Z:'Zulu'};
 const DW=['zero','one','two','three','four','five','six','seven','eight','nine'],DS=n=>String(n).split('').map(c=>DW[+c]||c).join(' ');
 function aviaText(s){s=s.replace(/⚠/g,'');
- s=s.replace(/\b(\d{3})\.(\d{1,3})\b/g,(m,a,b)=>DS(a)+' point '+DS(b));
+ s=s.replace(/\b(\d{3})\.(\d{1,3})\b/g,(m,a,b)=>DS(a)+' decimal '+DS(b));
  s=s.replace(/\b(\d{1,2})([LRC])\b/g,(m,n,l)=>DS(n)+' '+({L:'left',R:'right',C:'centre'})[l]);
  s=s.replace(/\bFL\s?(\d{2,3})\b/g,(m,n)=>'flight level '+DS(n));
  s=s.replace(/\b([A-Z])(\d{1,3})([A-Z]?)\b/g,(m,l,n,x)=>NATO[l]+' '+DS(n)+(x?' '+NATO[x]:''));
@@ -849,7 +849,9 @@ function aviaText(s){s=s.replace(/⚠/g,'');
  s=s.replace(/\b(\d{1,2})(\d)00\b/g,(m,t,h)=>DS(t)+' thousand'+(+h?' '+DS(h)+' hundred':''));
  s=s.replace(/\b(\d+)\s?(kt|kts|knots)\b/gi,(m,n)=>DS(n)+' knots');
  s=s.replace(/\d/g,m=>' '+DW[+m]+' ');s=s.replace(/([a-z])([A-Z]{2,})/g,'$1 $2');
- return s.replace(/\s+/g,' ')}
+ s=s.replace(/\b(ILS|IFR|QNH|SID|VOR|NDB|TMA|CTR|DME|ATC|RWY|UTC)\b/g,m=>m==='RWY'?'runway':m.split('').join(' '));
+ s=s.replace(/\bft\b/g,'feet').replace(/\bhPa\b/g,'hectopascal').replace(/\bATIS\b/g,'ay-tiss').replace(/\b([A-Z])([A-Z]{3,})\b/g,(m,x,y)=>x+y.toLowerCase());
+ return s.replace(/\s+/g,' ').replace(/ ,/g,',')}
 speak=function(s,k){if(!voice||!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(aviaText(s));u.lang='en-GB';u.volume=1;
  if(k==='plt'&&SPK){const id=SPK.id;u.pitch=1+(id%5)*.04;u.rate=1.0+(id%3)*.04;if(VOICES.length>1)u.voice=VOICES[id%VOICES.length]}else{u.pitch=1;u.rate=1;const v=VOICES.find(v=>/en-GB/i.test(v.lang))||VOICES[0];if(v)u.voice=v}
  speechSynthesis.speak(u)};
