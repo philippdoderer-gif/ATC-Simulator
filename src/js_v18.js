@@ -17,3 +17,9 @@
   const f=v=>String(Math.round(((v%360)+360)%360)||360).padStart(3,'0'),lab='HDG '+f(a.hdg)+'°'+(Math.abs(((th-a.hdg+540)%360)-180)>1.5?'  →  '+f(th)+'°':'');
   cx.font='700 12px ui-monospace,Menlo,monospace';const w=cx.measureText(lab).width+14;cx.fillStyle='rgba(6,11,20,.88)';cx.fillRect(x-w/2,y+R+24,w,20);cx.strokeStyle='rgba(94,234,212,.5)';cx.lineWidth=1;cx.strokeRect(x-w/2,y+R+24,w,20);cx.fillStyle='#e6f2ff';cx.fillText(lab,x,y+R+34.5);
   cx.restore()}catch(e){}}}
+// ---- Center: "Fill in the blanks" moves below the radar as a wide strip (desktop/tablet); the right column gets more room
+{const st=document.createElement('style');st.textContent=`@media(min-width:820px){#cfb{grid-column:1;padding:8px 10px}#cfb .cgl{margin:0 0 6px}#cfb .clz{display:flex;flex-wrap:wrap;gap:8px}#cfb .clz form{flex:1 1 auto;flex-wrap:nowrap;white-space:nowrap}#cfb input,#cfb select{min-width:0}.gwrap.hasCfb{grid-template-rows:auto 1fr}.gwrap.hasCfb .left{grid-column:1;grid-row:1;align-self:start}.gwrap.hasCfb .right{grid-column:2;grid-row:1/span 2}#cfb{grid-row:2;align-self:start}}`;document.head.appendChild(st);
+ const _cb=ctrBox;ctrBox=function(){_cb();try{const b=$('ctrb'),g=document.querySelector('#game .gwrap');let f=$('cfb');
+  const c=b&&innerWidth>=820?b.querySelector('.clz'):null;
+  if(c){if(!f){f=document.createElement('div');f.id='cfb';f.className='panel';g.appendChild(f)}f.hidden=false;const hd=c.previousElementSibling;f.innerHTML='';if(hd&&hd.classList.contains('cgl'))f.append(hd);f.append(c);g.classList.add('hasCfb')}
+  else if(f&&(MODE!=='C'||CTR.id==='none'||innerWidth<820)){f.hidden=true;f.innerHTML='';g.classList.remove('hasCfb')}}catch(e){console.warn(e)}}}
