@@ -405,13 +405,13 @@ function draw(){const W=cv.clientWidth,dpr=devicePixelRatio||1;if(cv.width!==Mat
   cx.fillStyle='#ffb454';for(const e of A.ex){const p=cl2(xs(e[1]));cx.fillText('→'+e[0],X(p[0])-8,Y(p[1]))}
   cx.fillStyle=cx.strokeStyle='#c9b8ff';for(const id of FLW[1])for(const n of['IF'+id,'FA'+id]){const p=WP[n];if(!p)continue;const x=X(p[0]),y=Y(p[1]);cx.beginPath();cx.moveTo(x,y-5);cx.lineTo(x+5,y+4);cx.lineTo(x-5,y+4);cx.closePath();cx.stroke();cx.fillText(n,x+7,y+3)}}
  if(window.preAc)preAc(X,Y,k,Rg,W);for(const a of ac){if(!vis(a))continue;const p=P(a),mine=O(a),calling=a.ph==='gate'&&a.req&&(MODE!=='G'||O(a)),col=a.emg?'#ff7a8a':a.conf?'#ff5d73':a===sel?'#ffd166':a.ph==='parked'?'#4a5a72':calling?'#ffffff':mine?'#5eead4':'#6f86a8',px=X(p.x),py=Y(p.y);cx.strokeStyle=cx.fillStyle=col;cx.lineWidth=1.5;
-  if(MODE==='C'&&a===sel){cx.globalAlpha=.4;a.trail.slice(0,-1).forEach(t=>cx.fillRect(X(t[0])-1.5,Y(t[1])-1.5,3,3));cx.globalAlpha=1}
+  if(MODE==='C'&&a.ph==='air'){const T0=a.trail.slice(0,-1);T0.forEach((t,i)=>{cx.globalAlpha=(a===sel?.55:.32)*(i+1)/Math.max(1,T0.length);cx.fillRect(X(t[0])-1.5,Y(t[1])-1.5,3,3)});cx.globalAlpha=1}
   const span=(SPAN[a.type]||40)/NM*k,showPlane=Rg<=3.2&&(a.ph!=='air'||MODE!=='C');
   if(showPlane){const sz=Math.max(7,span*.55);cx.save();cx.translate(px,py);cx.rotate(p.h*rad);if(a===sel||a.conf||calling){cx.shadowColor=calling?'rgba(255,255,255,.95)':col;cx.shadowBlur=calling?10+6*Math.sin(performance.now()/250):12}plane(cx,sz,col);cx.restore();cx.shadowBlur=0;if(a.xw){cx.strokeStyle='#ffb454';cx.beginPath();cx.arc(px,py,sz+3,0,7);cx.stroke()}}
   else{cx.strokeRect(px-4,py-4,8,8);if(a.ph==='air'&&MODE!=='G'){const vl=MODE==='C'?p.s/3600*60*k:12;cx.beginPath();cx.moveTo(px,py);cx.lineTo(px+SIN(p.h)*vl,py-COS(p.h)*vl);cx.stroke()}}
   if(a.conf){cx.beginPath();cx.arc(px,py,3*Math.min(k,20),0,7);cx.stroke()}
   if(a.req&&(O(a)||a.req==='cross')&&!(a.ph==='gate'&&MODE==='G'&&!O(a))){cx.save();cx.strokeStyle='#ffb454';cx.globalAlpha=.55+.45*Math.sin(performance.now()/200);cx.lineWidth=2;cx.beginPath();cx.arc(px,py,14,0,7);cx.stroke();cx.restore()}
-  cx.font='600 11px system-ui';cx.fillStyle=col;if((a.ph!=='parked'||a===sel||Rg<.2)&&!(a.ovf&&MODE!=='C'&&a!==sel)){cx.fillText(a.cs,px+10,py-6);cx.font='500 10px system-ui';cx.globalAlpha=.75;if(MODE==='C'&&a.ph==='air'){cx.globalAlpha=1;cx.font='600 10px ui-monospace,Menlo,monospace';cx.fillText(pad(Math.round(p.alt/100),3)+(a.ta>p.alt+50?'↑':a.ta<p.alt-50?'↓':' ')+' '+pad(Math.round(p.s/10),2),px+10,py+5);cx.font='500 10px system-ui';cx.globalAlpha=.75;cx.fillText(a.type+' '+(a.ovf?a.ex[0]:a.dep?a.fix:A.icao.slice(0,4)),px+10,py+16)}else cx.fillText(a.type,px+10,py+5);cx.globalAlpha=1;cx.font='600 11px system-ui'}if(a.emg){cx.fillStyle='#ff5d73';cx.fillText(a.emg==='MAYDAY'?'7700 EMERG':'PAN PAN',px+10,py-18);cx.fillStyle=col}if(a===sel)cx.fillText(MODE==='C'?'SQ '+(a.sq||'----'):a.ph,px+10,py+(MODE==='C'?28:17))}
+  cx.font='600 11px system-ui';cx.fillStyle=col;if((a.ph!=='parked'||a===sel||Rg<.2)&&!(a.ovf&&MODE!=='C'&&a!==sel)){if(MODE==='C'&&a.ph==='air')radarBlock(a,p,px,py,col,mine);else{cx.fillText(a.cs,px+10,py-6);cx.font='500 10px system-ui';cx.globalAlpha=.75;cx.fillText(a.type,px+10,py+5)}cx.globalAlpha=1;cx.font='600 11px system-ui'}if(a.emg){cx.fillStyle='#ff5d73';cx.fillText(a.emg==='MAYDAY'?'7700 EMERG':'PAN PAN',px+10,py-18);cx.fillStyle=col}if(a===sel)cx.fillText(MODE==='C'?'SQ '+(a.sq||'----'):a.ph,px+10,py+(MODE==='C'?28:17))}
  drawTaxi(X,Y,k,Rg)}
 // ================= taxiway graph, named taxi routes, nose-in stands & pushback =================
 let TG=null;
@@ -1518,6 +1518,15 @@ setInterval(()=>{if(!NET.spec||$('game').hidden)return;const t=$('ttl');if(t&&!/
   else if(f&&(MODE!=='C'||CTR.id==='none'||innerWidth<820)){f.hidden=true;f.innerHTML='';g.classList.remove('hasCfb')}}catch(e){console.warn(e)}}}
 // ---- Center: compact command menu: category chips (Approach / Heading / Waypoints / Altitude / Speed / Info), options shown for one category at a time
 const CMP={k:'Heading'};
+if(SET.desel===undefined)SET.desel=true;
+const deselAfter=()=>{if(SET.desel&&MODE==='C'&&!BATCH)setTimeout(()=>{sel=null;psig='';ui()},0)};
+{const _R=RUN;RUN=function(d,a,g){const r=_R(d,a,g);if(d&&d.id!=='batch')deselAfter();return r}}
+{const _S=sendCombo;sendCombo=function(a,o){const r=_S(a,o);deselAfter();return r}}
+{const _T=applyText;applyText=function(v){const r=_T(v);if(!r)deselAfter();return r}}
+{const g=document.querySelector('#setm .sg:nth-of-type(3)')||document.querySelector('#setm .smc');const l=document.createElement('label');l.innerHTML='<input type="checkbox" id="sDesel"> Center: deselect aircraft after sending an instruction';
+ const host=[...document.querySelectorAll('#setm .sg')].find(x=>/Game/.test(x.textContent))||g;host.insertBefore(l,host.querySelector('small')||null);
+ const cb=l.querySelector('input');cb.checked=!!SET.desel;cb.onchange=()=>{SET.desel=cb.checked;saveSet()};
+ const _o=openSet;openSet=function(){_o();cb.checked=!!SET.desel}}
 {const st=document.createElement('style');st.textContent=`#cmpbar{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 6px}#cmpbar button{padding:8px 14px;border-radius:999px;font-size:14px;font-weight:600}#cmpbar button.on{background:var(--sel);color:#10151f;border-color:var(--sel)}#cmpbar button.em{opacity:.45}#cmpbody.cb{margin-top:2px}`;document.head.appendChild(st);
  const cat=t=>/^Direct |^Hold at /.test(t)?'Waypoints':/^(Radar contact|Cleared ILS)/.test(t)?'Approach':/^(Turn|Fly|Orbit)/.test(t)?'Heading':/^(Descend|Climb|Maintain)/.test(t)?'Altitude':/^(Speed|Normal speed|Reduce|Increase)/.test(t)?'Speed':'Info';
  const ORD=['Approach','Heading','Waypoints','Altitude','Speed','Info'];
@@ -1527,8 +1536,17 @@ const CMP={k:'Heading'};
   const bar=document.createElement('div');bar.id='cmpbar';const body=document.createElement('div');body.id='cmpbody';body.className='cb';
   const show=k=>{CMP.k=k;body.innerHTML='';G[k].forEach(b=>body.appendChild(b));bar.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.k===k))};
   for(const k of keys){const x=document.createElement('button');x.dataset.k=k;x.textContent=k+(k==='Heading'||k==='Altitude'||k==='Speed'?'':'');x.onclick=e=>{e.stopPropagation();show(k)};bar.appendChild(x)}
+  {const d=document.createElement('button');d.textContent='✕ Deselect';d.title='Clear selection';d.onclick=e=>{e.stopPropagation();sel=null;psig='';ui()};bar.appendChild(d)}
   const first=cbs[0];c.querySelectorAll(':scope>.cgl').forEach(h=>{if(h.nextElementSibling&&h.nextElementSibling.classList.contains('cb'))h.remove()});
   first.before(bar);bar.after(body);cbs.forEach(cb=>cb.remove());show(CMP.k)}catch(e){console.warn(e)}}}
+// ---- Center: real-radar style data block: callsign / FL + trend + ground speed / assigned values / type & destination
+function radarBlock(a,p,px,py,col,mine){
+ const fl=Math.round(p.alt/100),altT=p.alt>=5500?'FL'+pad(fl,3):String(Math.round(p.alt/100)*100),tr=a.ta>p.alt+50?'↑':a.ta<p.alt-50?'↓':'→',gs=Math.round(p.s),wk=typeof WKC==='function'?WKC(a.type):'';
+ cx.save();cx.strokeStyle=col;cx.globalAlpha=.55;cx.lineWidth=1;cx.beginPath();cx.moveTo(px+4,py-4);cx.lineTo(px+9,py-9);cx.stroke();cx.globalAlpha=1;
+ cx.font='700 11px ui-monospace,Menlo,monospace';cx.fillStyle=col;cx.fillText(a.cs+(wk&&wk!=='M'?' '+wk:''),px+10,py-6);
+ cx.font='600 10px ui-monospace,Menlo,monospace';cx.fillText(altT+tr+' '+gs+'kt',px+10,py+5);
+ let l3='';if(mine||a===sel){const parts=[];if(Math.abs(a.ta-p.alt)>50)parts.push('▸'+(a.ta>=5500?'FL'+pad(Math.round(a.ta/100),3):Math.round(a.ta/100)*100));if(Math.abs(((a.th-p.h+540)%360)-180)>2)parts.push('H'+pad(Math.round(a.th)%360||360,3));if(Math.abs(a.ts-gs)>5)parts.push('S'+Math.round(a.ts));l3=parts.join(' ')}
+ cx.globalAlpha=.9;cx.fillStyle=l3?'#ffb454':col;cx.font='500 10px ui-monospace,Menlo,monospace';cx.fillText(l3||(a.type+' '+(a.ovf?a.ex[0]:a.dep?a.fix:A.icao.slice(0,4))),px+10,py+16);cx.restore()}
 
 // ===================== Center: draft steppers, typed instructions, fill-in phrases =====================
 const FX=()=>Object.keys(WP).filter(n=>!/^(IF|FA)/.test(n)).sort();

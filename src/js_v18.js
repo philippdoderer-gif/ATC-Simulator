@@ -25,6 +25,15 @@
   else if(f&&(MODE!=='C'||CTR.id==='none'||innerWidth<820)){f.hidden=true;f.innerHTML='';g.classList.remove('hasCfb')}}catch(e){console.warn(e)}}}
 // ---- Center: compact command menu: category chips (Approach / Heading / Waypoints / Altitude / Speed / Info), options shown for one category at a time
 const CMP={k:'Heading'};
+if(SET.desel===undefined)SET.desel=true;
+const deselAfter=()=>{if(SET.desel&&MODE==='C'&&!BATCH)setTimeout(()=>{sel=null;psig='';ui()},0)};
+{const _R=RUN;RUN=function(d,a,g){const r=_R(d,a,g);if(d&&d.id!=='batch')deselAfter();return r}}
+{const _S=sendCombo;sendCombo=function(a,o){const r=_S(a,o);deselAfter();return r}}
+{const _T=applyText;applyText=function(v){const r=_T(v);if(!r)deselAfter();return r}}
+{const g=document.querySelector('#setm .sg:nth-of-type(3)')||document.querySelector('#setm .smc');const l=document.createElement('label');l.innerHTML='<input type="checkbox" id="sDesel"> Center: deselect aircraft after sending an instruction';
+ const host=[...document.querySelectorAll('#setm .sg')].find(x=>/Game/.test(x.textContent))||g;host.insertBefore(l,host.querySelector('small')||null);
+ const cb=l.querySelector('input');cb.checked=!!SET.desel;cb.onchange=()=>{SET.desel=cb.checked;saveSet()};
+ const _o=openSet;openSet=function(){_o();cb.checked=!!SET.desel}}
 {const st=document.createElement('style');st.textContent=`#cmpbar{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 6px}#cmpbar button{padding:8px 14px;border-radius:999px;font-size:14px;font-weight:600}#cmpbar button.on{background:var(--sel);color:#10151f;border-color:var(--sel)}#cmpbar button.em{opacity:.45}#cmpbody.cb{margin-top:2px}`;document.head.appendChild(st);
  const cat=t=>/^Direct |^Hold at /.test(t)?'Waypoints':/^(Radar contact|Cleared ILS)/.test(t)?'Approach':/^(Turn|Fly|Orbit)/.test(t)?'Heading':/^(Descend|Climb|Maintain)/.test(t)?'Altitude':/^(Speed|Normal speed|Reduce|Increase)/.test(t)?'Speed':'Info';
  const ORD=['Approach','Heading','Waypoints','Altitude','Speed','Info'];
@@ -34,5 +43,14 @@ const CMP={k:'Heading'};
   const bar=document.createElement('div');bar.id='cmpbar';const body=document.createElement('div');body.id='cmpbody';body.className='cb';
   const show=k=>{CMP.k=k;body.innerHTML='';G[k].forEach(b=>body.appendChild(b));bar.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.k===k))};
   for(const k of keys){const x=document.createElement('button');x.dataset.k=k;x.textContent=k+(k==='Heading'||k==='Altitude'||k==='Speed'?'':'');x.onclick=e=>{e.stopPropagation();show(k)};bar.appendChild(x)}
+  {const d=document.createElement('button');d.textContent='✕ Deselect';d.title='Clear selection';d.onclick=e=>{e.stopPropagation();sel=null;psig='';ui()};bar.appendChild(d)}
   const first=cbs[0];c.querySelectorAll(':scope>.cgl').forEach(h=>{if(h.nextElementSibling&&h.nextElementSibling.classList.contains('cb'))h.remove()});
   first.before(bar);bar.after(body);cbs.forEach(cb=>cb.remove());show(CMP.k)}catch(e){console.warn(e)}}}
+// ---- Center: real-radar style data block: callsign / FL + trend + ground speed / assigned values / type & destination
+function radarBlock(a,p,px,py,col,mine){
+ const fl=Math.round(p.alt/100),altT=p.alt>=5500?'FL'+pad(fl,3):String(Math.round(p.alt/100)*100),tr=a.ta>p.alt+50?'↑':a.ta<p.alt-50?'↓':'→',gs=Math.round(p.s),wk=typeof WKC==='function'?WKC(a.type):'';
+ cx.save();cx.strokeStyle=col;cx.globalAlpha=.55;cx.lineWidth=1;cx.beginPath();cx.moveTo(px+4,py-4);cx.lineTo(px+9,py-9);cx.stroke();cx.globalAlpha=1;
+ cx.font='700 11px ui-monospace,Menlo,monospace';cx.fillStyle=col;cx.fillText(a.cs+(wk&&wk!=='M'?' '+wk:''),px+10,py-6);
+ cx.font='600 10px ui-monospace,Menlo,monospace';cx.fillText(altT+tr+' '+gs+'kt',px+10,py+5);
+ let l3='';if(mine||a===sel){const parts=[];if(Math.abs(a.ta-p.alt)>50)parts.push('▸'+(a.ta>=5500?'FL'+pad(Math.round(a.ta/100),3):Math.round(a.ta/100)*100));if(Math.abs(((a.th-p.h+540)%360)-180)>2)parts.push('H'+pad(Math.round(a.th)%360||360,3));if(Math.abs(a.ts-gs)>5)parts.push('S'+Math.round(a.ts));l3=parts.join(' ')}
+ cx.globalAlpha=.9;cx.fillStyle=l3?'#ffb454':col;cx.font='500 10px ui-monospace,Menlo,monospace';cx.fillText(l3||(a.type+' '+(a.ovf?a.ex[0]:a.dep?a.fix:A.icao.slice(0,4))),px+10,py+16);cx.restore()}
