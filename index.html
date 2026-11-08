@@ -377,8 +377,8 @@ function draw(){const W=cv.clientWidth,dpr=devicePixelRatio||1;if(cv.width!==Mat
 
  if(Rg<=14){cx.save();cx.setTransform(dpr*k,0,0,-dpr*k,dpr*(c-view.x*k),dpr*(c+view.y*k));const lw=1/k,m=1/NM,det=Rg<=4;cx.lineJoin='round';
   const TWD=22*m;cx.lineCap='square';cx.lineJoin='miter';
-  cx.strokeStyle='#6a93c2';cx.lineWidth=TWD+2.6*lw;cx.stroke(g.tx);cx.lineWidth=2.6*lw;cx.stroke(g.ap);if(g.ln)cx.stroke(g.ln);cx.fillStyle='#6a93c2';cx.fill(g.ap);if(g.ln)cx.fill(g.ln);
-  const NT=isNight();cx.strokeStyle=NT?'#16283c':'#223d5b';cx.lineWidth=TWD;cx.stroke(g.tx);cx.fillStyle=NT?'#1b2e44':'#2a4766';cx.fill(g.ap);if(g.ln)cx.fill(g.ln);cx.fillStyle='#071226';cx.fill(g.gh);cx.strokeStyle='#4f74a0';cx.lineWidth=1.4*lw;cx.stroke(g.gh);cx.lineCap='butt';
+  const NT=isNight();cx.strokeStyle=NT?'#4a525c':'#aeb7c2';cx.lineWidth=TWD+2.6*lw;cx.stroke(g.tx);cx.strokeStyle='#6a93c2';cx.lineWidth=2.6*lw;cx.stroke(g.ap);if(g.ln)cx.stroke(g.ln);cx.fillStyle='#6a93c2';cx.fill(g.ap);if(g.ln)cx.fill(g.ln);
+  cx.fillStyle=NT?'#1b2e44':'#2a4766';cx.fill(g.ap);if(g.ln)cx.fill(g.ln);cx.strokeStyle=NT?'#2f353d':'#6f7a87';cx.lineWidth=TWD;cx.stroke(g.tx);cx.fillStyle='#071226';cx.fill(g.gh);cx.strokeStyle='#4f74a0';cx.lineWidth=1.4*lw;cx.stroke(g.gh);cx.lineCap='butt';
   if(Rg<=1.3&&g.sl){cx.strokeStyle=NT?'rgba(255,209,102,.3)':'rgba(255,209,102,.6)';cx.lineWidth=Math.max(.7*lw,.8*m);cx.stroke(g.sl)}if(Rg<=3){cx.strokeStyle=NT?'rgba(255,209,102,.35)':'rgba(255,209,102,.8)';cx.lineWidth=Math.max(.9*lw,1.2*m);cx.stroke(g.tx);if(NT&&Rg<=1.2){cx.strokeStyle='rgba(120,255,160,.95)';cx.lineCap='round';cx.lineWidth=Math.max(2.2*lw,2*m);cx.setLineDash([.1*m,15*m]);cx.stroke(g.tx);cx.setLineDash([]);cx.lineCap='butt'}}
   cx.lineJoin='round';cx.strokeStyle=NT?'#7d8aa0':'#c3cede';cx.lineWidth=2*lw;cx.stroke(g.bd);cx.fillStyle=NT?'#4b5466':'#7d8798';cx.fill(g.bd);cx.strokeStyle='#e6edf7';cx.lineWidth=2.6*lw;cx.stroke(g.tm);cx.fillStyle='#aab6c8';cx.fill(g.tm);
   for(const r of D.rw){const a=[r.a[0]/NM,r.a[1]/NM],b=[r.b[0]/NM,r.b[1]/NM],w=Math.max(r.w,60)*m,L=Math.hypot(b[0]-a[0],b[1]-a[1]),ux=(b[0]-a[0])/L,uy=(b[1]-a[1])/L,nx=-uy,ny=ux,ln=(p,q,wd,col,dash)=>{cx.strokeStyle=col;cx.lineWidth=wd;cx.setLineDash(dash||[]);cx.beginPath();cx.moveTo(p[0],p[1]);cx.lineTo(q[0],q[1]);cx.stroke();cx.setLineDash([])};
@@ -834,9 +834,20 @@ function lhrAlt(silent){if(ap!=='LHR'||flow!=='W')return;const h=lt((T/3600)%24)
 // --- say hook (count missed instructions) + voice per aircraft
 const _say=say;say=function(s,k){if(/no reply|no instruction/.test(s))SH.miss++;_say(s,k)};
 let SPK=null;const _atc=atc;atc=function(a,t,r){SPK=a;_atc(a,t,r)};const _ask=ask;ask=function(a,k,t){SPK=a;_ask(a,k,t)};
-let VOICES=[];const loadV=()=>{try{VOICES=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang))}catch(e){}};if(window.speechSynthesis){loadV();speechSynthesis.onvoiceschanged=loadV}
-speak=function(s,k){if(!voice||!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(s.replace(/⚠/g,'').replace(/([A-Z]{3})(\d+)/g,(m,a,b)=>a+' '+b.split('').join(' ')));u.lang='en-GB';
- if(k==='plt'&&SPK){const id=SPK.id;u.pitch=.85+(id%7)*.09;u.rate=1.0+(id%4)*.07;if(VOICES.length>1)u.voice=VOICES[id%VOICES.length]}else{u.pitch=.85;u.rate=1.08;const v=VOICES.find(v=>/GB/.test(v.lang));if(v)u.voice=v}
+let VOICES=[];const BADV=/whisper|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|wobble|zarvox|albert|fred|junior|ralph|kathy|princess|grandma|grandpa|rocko|shelley|flo|eddy|reed|sandy|compact/i;
+const loadV=()=>{try{let v=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)&&!BADV.test(v.name));const g=v.filter(x=>/GB|US|AU|IE|ZA|IN/i.test(x.lang));VOICES=(g.length?g:v).sort((a,b)=>(b.localService-a.localService)||a.name.localeCompare(b.name))}catch(e){}};if(window.speechSynthesis){loadV();speechSynthesis.onvoiceschanged=loadV}
+const DW=['zero','one','two','tree','four','fife','six','seven','eight','niner'],DS=n=>String(n).split('').map(c=>DW[+c]||c).join(' ');
+function aviaText(s){s=s.replace(/⚠/g,'');
+ s=s.replace(/\b(\d{3})\.(\d{1,3})\b/g,(m,a,b)=>DS(a)+' decimal '+DS(b));
+ s=s.replace(/\b(\d{1,2})([LRC])\b/g,(m,n,l)=>DS(n)+' '+({L:'left',R:'right',C:'centre'})[l]);
+ s=s.replace(/\bFL\s?(\d{2,3})\b/g,(m,n)=>'flight level '+DS(n));
+ s=s.replace(/\b(squawk|QNH|heading|hdg|runway|rwy)\s*(\d+)/gi,(m,w,n)=>w+' '+DS(n));
+ s=s.replace(/\b(\d{1,2})(\d)00\b/g,(m,t,h)=>DS(t)+' thousand'+(+h?' '+DS(h)+' hundred':''));
+ s=s.replace(/\b(\d+)\s?(kt|kts|knots)\b/gi,(m,n)=>DS(n)+' knots');
+ s=s.replace(/\d+/g,m=>' '+DS(m)+' ');
+ return s.replace(/\s+/g,' ')}
+speak=function(s,k){if(!voice||!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(aviaText(s));u.lang='en-GB';u.volume=1;
+ if(k==='plt'&&SPK){const id=SPK.id;u.pitch=.95+(id%6)*.07;u.rate=1.0+(id%4)*.05;if(VOICES.length>1)u.voice=VOICES[id%VOICES.length]}else{u.pitch=.95;u.rate=1.02;const v=VOICES.find(v=>/en-GB/i.test(v.lang))||VOICES[0];if(v)u.voice=v}
  speechSynthesis.speak(u)};
 // --- de-icing
 const needDeice=a=>WX.t<=3&&a.dep;
