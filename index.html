@@ -842,6 +842,7 @@ function aviaText(s){s=s.replace(/⚠/g,'');
  s=s.replace(/\b(\d{1,2})([LRC])\b/g,(m,n,l)=>DS(n)+' '+({L:'left',R:'right',C:'centre'})[l]);
  s=s.replace(/\bFL\s?(\d{2,3})\b/g,(m,n)=>'flight level '+DS(n));
  s=s.replace(/\b(squawk|QNH|heading|hdg|runway|rwy)\s*(\d+)/gi,(m,w,n)=>w+' '+DS(n));
+ s=s.replace(/\b(\d{1,2})(\d)00\b/g,(m,t,h)=>DS(t)+' thousand'+(+h?' '+DS(h)+' hundred':''));
  s=s.replace(/\b(\d+)\s?(kt|kts|knots)\b/gi,(m,n)=>DS(n)+' knots');
  s=s.replace(/\d/g,m=>' '+DW[+m]+' ');s=s.replace(/([a-z])([A-Z]{2,})/g,'$1 $2');
  return s.replace(/\s+/g,' ')}
