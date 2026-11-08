@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#060b14"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="apple-touch-icon" href="icon-192.png"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ATC Simulator</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Saira+Semi+Condensed:wght@500;600;700&display=swap">
@@ -1431,6 +1431,52 @@ const xst=document.createElement('style');xst.textContent=`#xtra{margin:14px 0 6
 #seq .sq{display:grid;grid-template-columns:1.3fr .7fr .4fr .7fr 1.4fr;gap:6px;font-size:12px;padding:4px 6px;border-radius:8px;cursor:pointer;align-items:center}#seq .sq:hover{background:rgba(255,255,255,.05)}#seq .sq.bad{background:rgba(255,93,115,.14)}#seq .g{color:var(--dim);text-align:right}#seq .bad .g{color:var(--warn)}
 #setB{margin-right:2px}`;document.head.appendChild(xst);
 try{menuX()}catch(e){}
+// ===================== v15: mobile layout (map + bottom command sheet), PWA registration =====================
+(()=>{const st=document.createElement('style');st.textContent=`
+@media(max-width:819px){
+ #game:not([hidden]){--sh:42dvh}#game.sheetmin{--sh:15dvh}
+ #game .bar{position:sticky;top:0;z-index:30;background:rgba(6,11,20,.92);backdrop-filter:blur(8px);overflow-x:auto;flex-wrap:nowrap;white-space:nowrap;padding:6px 4px}
+ #game .bar button{flex:0 0 auto;padding:7px 10px}#game .bar #ttl{flex:0 0 auto;max-width:none;font-size:12px;padding:0 8px}
+ #game .hud{grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;margin-bottom:4px}#game .hud>div{padding:3px 5px}#game .hud b{font-size:14px!important}#game .hud i{font-size:7px;letter-spacing:.04em;white-space:nowrap;overflow:hidden}#game .hud b,#game .hud #clk{white-space:nowrap;font-size:12px!important}#game .hud>div{min-width:0;overflow:hidden}
+ canvas#cv{aspect-ratio:auto;height:calc(100dvh - var(--sh) - 112px);min-height:200px;border-radius:12px}
+ #game .right{position:fixed;left:0;right:0;bottom:0;height:var(--sh);overflow-y:auto;z-index:40;background:rgba(8,14,26,.97);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:32px 8px 10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 -10px 30px rgba(0,0,0,.5);overscroll-behavior:contain}
+ #shH{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--sh) - 24px);z-index:45;width:90px;height:26px;border-radius:14px 14px 0 0;border:1px solid var(--line);border-bottom:0;background:#0c1626;color:var(--dim);font-size:15px;padding:0;line-height:1}
+ #game .panel{padding:8px}#ctl{max-height:none!important}
+ #seq{display:none!important}.legend{display:none}.zb{top:6px;right:6px}.zb button{width:40px;height:40px}
+ body{overscroll-behavior:none}
+}
+@media(min-width:820px){#shH{display:none}}`;document.head.appendChild(st);
+ const h=document.createElement('button');h.id='shH';h.textContent='⌃⌄';h.onclick=()=>{$('game').classList.toggle('sheetmin');setTimeout(()=>window.dispatchEvent(new Event('resize')),50)};document.body.appendChild(h);
+ setInterval(()=>{h.style.display=$('game').hidden?'none':''},500);
+ const sel0=()=>{if(window.innerWidth<820&&$('game').classList.contains('sheetmin'))$('game').classList.remove('sheetmin')};
+ cv.addEventListener('pointerup',()=>setTimeout(sel0,60));
+ // PWA: only on real https/http origins that are not the artifact sandbox
+ try{const ok=/^https?:$/.test(location.protocol)&&/github\.io$|localhost$/.test(location.hostname);
+  if('serviceWorker' in navigator&&ok)navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}
+})();
+// ===================== v16: multiplayer extras: ready check, spectator, host-left notice =====================
+RCOL.S='#9aa7bd';NET.spec=false;
+{const _s=NET.send;NET.send=(t,d)=>{if(NET.spec&&t==='cmd'){say('Spectators cannot issue commands.','sys');return}_s(t,d)}}
+{const _i=init;init=function(){if(NET.on&&NET.role==='S'){NET.spec=true;MODE='T';CMB=false}else NET.spec=false;_i()}}
+{const _j=joinAssign;joinAssign=function(){if(NET.role==='S')return;_j()}}
+{const _sr=setRole;setRole=function(r){if(r==='S'&&!NET.client)return;_sr(r);if(r==='S'&&NET.room)NET.room.presence({rdy:true})}}
+NET.rdy=false;
+function setReady(v){NET.rdy=v;if(NET.room)NET.room.presence({rdy:v});lobbyRender()}
+{const _lr=lobbyRender;lobbyRender=function(){_lr();if(LB.hidden)return;
+ const me=document.querySelector('#lbPl .lbp.me .mprole');
+ if(me&&NET.client){const b=document.createElement('button');b.dataset.r='S';b.textContent='Spectator';if(NET.role==='S')b.className='on';me.appendChild(b)}
+ document.querySelectorAll('#lbPl .lbp').forEach((row,i)=>{const p=PEERS[i];if(!p)return;const pr=p.presence||{},sm=row.querySelector('small');
+  if(!sm)return;const isHost=!!pr.host;const ok=isHost||pr.rdy||pr.role==='S';sm.innerHTML=(pr.host?'Host':pr.role==='S'?'Spectator':'Player')+(p.isMe?' · you':'')+(isHost?'':` · <span style="color:${ok?'var(--ok)':'var(--warn)'}">${ok?'ready ✓':'not ready'}</span>`)});
+ if(NET.client&&!$('lbRdy')){const b=document.createElement('button');b.id='lbRdy';b.textContent='Ready';b.onclick=()=>setReady(!NET.rdy);$('lbWait').after(b)}
+ const rb=$('lbRdy');if(rb){rb.hidden=!NET.client;rb.textContent=NET.rdy?'✓ Ready (tap to undo)':'I am ready';rb.className=NET.rdy?'go2':''}
+ if(!NET.client){const n=PEERS.filter(p=>!p.isMe&&!(p.presence&&(p.presence.rdy||p.presence.role==='S'))).length;$('lbStart').textContent=n?`Start anyway (${n} not ready)`:'Start game';$('lbWait').textContent=n?n+' player(s) not ready yet.':'Everyone is ready.'}}}
+{const _ml=mpLeave;mpLeave=function(){NET.rdy=false;NET.spec=false;_ml()}}
+// host disappears during a running client game
+let HOSTSEEN=0;setInterval(()=>{if(!NET.on||!NET.client||!(NET.gameOn||NET.ready))return;const h=PEERS.some(p=>p.presence&&p.presence.host);
+ if(h){HOSTSEEN=Date.now();const b=$('hostGone');if(b)b.remove();return}
+ if(HOSTSEEN&&Date.now()-HOSTSEEN>8000&&!$('hostGone')){const d=document.createElement('div');d.id='hostGone';d.innerHTML='The host has left or lost connection. The game is paused for you. <button id="hgL">Leave session</button>';d.style.cssText='position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:90;background:#2a1118;border:1px solid var(--warn);color:var(--fg);padding:10px 14px;border-radius:14px;max-width:90vw;font-size:14px';document.body.appendChild(d);$('hgL').onclick=()=>{d.remove();mpLeave();$('game').hidden=true;$('menu').hidden=false}}},2000);
+// spectator badge
+setInterval(()=>{if(!NET.spec||$('game').hidden)return;const t=$('ttl');if(t&&!/Spectator/.test(t.textContent))t.textContent='👁 Spectator · '+t.textContent},1000);
 
 // ===================== Center: draft steppers, typed instructions, fill-in phrases =====================
 const FX=()=>Object.keys(WP).filter(n=>!/^(IF|FA)/.test(n)).sort();
