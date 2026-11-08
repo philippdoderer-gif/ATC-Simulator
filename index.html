@@ -834,20 +834,19 @@ function lhrAlt(silent){if(ap!=='LHR'||flow!=='W')return;const h=lt((T/3600)%24)
 // --- say hook (count missed instructions) + voice per aircraft
 const _say=say;say=function(s,k){if(/no reply|no instruction/.test(s))SH.miss++;_say(s,k)};
 let SPK=null;const _atc=atc;atc=function(a,t,r){SPK=a;_atc(a,t,r)};const _ask=ask;ask=function(a,k,t){SPK=a;_ask(a,k,t)};
-let VOICES=[];const BADV=/whisper|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|wobble|zarvox|albert|fred|junior|ralph|kathy|princess|grandma|grandpa|rocko|shelley|flo|eddy|reed|sandy|compact/i;
-const loadV=()=>{try{let v=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)&&!BADV.test(v.name));const g=v.filter(x=>/GB|US|AU|IE|ZA|IN/i.test(x.lang));VOICES=(g.length?g:v).sort((a,b)=>(b.localService-a.localService)||a.name.localeCompare(b.name))}catch(e){}};if(window.speechSynthesis){loadV();speechSynthesis.onvoiceschanged=loadV}
-const DW=['zero','one','two','tree','four','fife','six','seven','eight','niner'],DS=n=>String(n).split('').map(c=>DW[+c]||c).join(' ');
+let VOICES=[];const BADV=/whisper|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|wobble|zarvox|albert|fred|junior|ralph|kathy|princess|agnes|bruce|vicki|victoria/i,GOODV=/premium|enhanced|natural|neural|online|google|microsoft|siri|daniel|oliver|arthur|serena|samantha|karen|moira|tessa|aaron|nicky|libby|ryan|sonia/i;
+const loadV=()=>{try{let v=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)&&!BADV.test(v.name));const g=v.filter(x=>/GB|US|AU|IE|ZA|IN/i.test(x.lang));const sc=x=>(GOODV.test(x.name)?4:0)+(/compact/i.test(x.name)?-3:0)+(/en-GB/i.test(x.lang)?1:0);VOICES=(g.length?g:v).sort((a,b)=>sc(b)-sc(a)||a.name.localeCompare(b.name));VOICES=VOICES.filter(x=>sc(x)>=sc(VOICES[0])-3).slice(0,6)}catch(e){}};if(window.speechSynthesis){loadV();speechSynthesis.onvoiceschanged=loadV}
+const DW=['zero','one','two','three','four','five','six','seven','eight','nine'],DS=n=>String(n).split('').map(c=>DW[+c]||c).join(' ');
 function aviaText(s){s=s.replace(/⚠/g,'');
- s=s.replace(/\b(\d{3})\.(\d{1,3})\b/g,(m,a,b)=>DS(a)+' decimal '+DS(b));
+ s=s.replace(/\b(\d{3})\.(\d{1,3})\b/g,(m,a,b)=>DS(a)+' point '+DS(b));
  s=s.replace(/\b(\d{1,2})([LRC])\b/g,(m,n,l)=>DS(n)+' '+({L:'left',R:'right',C:'centre'})[l]);
  s=s.replace(/\bFL\s?(\d{2,3})\b/g,(m,n)=>'flight level '+DS(n));
  s=s.replace(/\b(squawk|QNH|heading|hdg|runway|rwy)\s*(\d+)/gi,(m,w,n)=>w+' '+DS(n));
- s=s.replace(/\b(\d{1,2})(\d)00\b/g,(m,t,h)=>DS(t)+' thousand'+(+h?' '+DS(h)+' hundred':''));
  s=s.replace(/\b(\d+)\s?(kt|kts|knots)\b/gi,(m,n)=>DS(n)+' knots');
- s=s.replace(/\d+/g,m=>' '+DS(m)+' ');
+ s=s.replace(/\d/g,m=>' '+DW[+m]+' ');s=s.replace(/([a-z])([A-Z]{2,})/g,'$1 $2');
  return s.replace(/\s+/g,' ')}
 speak=function(s,k){if(!voice||!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(aviaText(s));u.lang='en-GB';u.volume=1;
- if(k==='plt'&&SPK){const id=SPK.id;u.pitch=.95+(id%6)*.07;u.rate=1.0+(id%4)*.05;if(VOICES.length>1)u.voice=VOICES[id%VOICES.length]}else{u.pitch=.95;u.rate=1.02;const v=VOICES.find(v=>/en-GB/i.test(v.lang))||VOICES[0];if(v)u.voice=v}
+ if(k==='plt'&&SPK){const id=SPK.id;u.pitch=1+(id%5)*.04;u.rate=1.0+(id%3)*.04;if(VOICES.length>1)u.voice=VOICES[id%VOICES.length]}else{u.pitch=1;u.rate=1;const v=VOICES.find(v=>/en-GB/i.test(v.lang))||VOICES[0];if(v)u.voice=v}
  speechSynthesis.speak(u)};
 // --- de-icing
 const needDeice=a=>WX.t<=3&&a.dep;
