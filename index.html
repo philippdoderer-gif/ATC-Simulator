@@ -466,15 +466,29 @@ function buildTG(){
  {const q=new Path2D(),hw=17;let cnt=0;for(const g of gates){if(!g.pb)continue;const gx=g.x*NM,gy=g.y*NM,px=g.pb[0]*NM,py=g.pb[1]*NM,L=Math.hypot(px-gx,py-gy);if(L<14||L>240)continue;const ux=(px-gx)/L,uy=(py-gy)/L,nx=-uy*hw,ny=ux*hw,ex=ux*10,ey=uy*10;
   q.moveTo((gx+nx-ex)/NM,(gy+ny-ey)/NM);q.lineTo((px+nx+ex)/NM,(py+ny+ey)/NM);q.lineTo((px-nx+ex)/NM,(py-ny+ey)/NM);q.lineTo((gx-nx-ex)/NM,(gy-ny-ey)/NM);q.closePath();cnt++}
   geoOf(ap).ln=(ap==='LHR'||ap==='FRA')?null:q}
- // holding points: walk outwards along the real taxiway until ~95 m from the runway centreline
+ // holding points: the chart gives the real holding positions (OSM). Snap each one onto its taxiway,
+ // name it after that taxiway and only walk outwards when the point sits too close to the runway.
+ const hpDir=(e,R,a0,b0)=>{const l=Math.hypot(...e.qd)||1,ox=e.qd[0]/l,oy=e.qd[1]/l,ang=(x,y)=>Math.acos(cl(x*R.dir[0]+y*R.dir[1],-1,1))*180/Math.PI;e.depOK=ang(-ox,-oy)<=115;e.arrOK=ang(ox,oy)<=115};
+ const edgeName=v=>{for(const ed of adj[v]){const n=E[ed].nm;if(n)return n}return ''};
  for(const id in ENT){const R=RW[id];let sg=1;const off=v=>sg*((N[v][0]/NM-R.T0.x)*R.dir[1]-(N[v][1]/NM-R.T0.y)*R.dir[0])*NM;
-  for(const e of ENT[id]){sg=Math.sign((e.p[0]-R.T0.x)*R.dir[1]-(e.p[1]-R.T0.y)*R.dir[0])||1;let cur=nearNode(e.p[0]*NM,e.p[1]*NM),prev=-1;const HP=95;
+  for(const e of ENT[id]){sg=Math.sign((e.p[0]-R.T0.x)*R.dir[1]-(e.p[1]-R.T0.y)*R.dir[0])||1;const px=e.p[0]*NM,py=e.p[1]*NM,po=Math.abs((e.p[0]-R.T0.x)*R.dir[1]-(e.p[1]-R.T0.y)*R.dir[0])*NM;
+   // nearest taxiway edge that leads away from the runway
+   let be=null;for(let k=0;k<E.length;k++){const ed=E[k],r=segDist(px,py,N[ed.a][0],N[ed.a][1],N[ed.b][0],N[ed.b][1]);if(r[0]<35&&Math.abs(off(ed.a)-off(ed.b))>3&&(!be||r[0]<be[0]))be=[r[0],r[1],r[2],k]}
+   if(be&&po>=75){const ed=E[be[3]],out=off(ed.a)>off(ed.b)?ed.a:ed.b,inn=out===ed.a?ed.b:ed.a;
+    e.q=[be[1]/NM,be[2]/NM];e.node=out;e.qd=[N[out][0]-N[inn][0],N[out][1]-N[inn][1]];e.real=1;
+    const nm=ed.nm||edgeName(out)||edgeName(inn);if(nm)e.lb=nm;hpDir(e,R);continue}
+   // fallback: walk outwards along the taxiway until ~95 m from the centreline
+   let cur=nearNode(px,py),prev=-1;const HP=95;
    for(let it=0;it<40&&cur>=0&&off(cur)<HP;it++){let bw=-1,bo=off(cur)+0.5;for(const ed of adj[cur]){const w=oth(ed,cur);if(w===prev)continue;const o=off(w);if(o>bo){bo=o;bw=w}}if(bw<0)break;prev=cur;cur=bw}
    if(cur<0){e.node=nearNode(e.q[0]*NM,e.q[1]*NM);continue}
    let qx=N[cur][0],qy=N[cur][1];if(prev>=0){const o0=off(prev),o1=off(cur);if(o1>HP&&o1>o0){const t=(HP-o0)/(o1-o0);qx=N[prev][0]+(N[cur][0]-N[prev][0])*t;qy=N[prev][1]+(N[cur][1]-N[prev][1])*t}
     e.qd=[(N[cur][0]-N[prev][0]),(N[cur][1]-N[prev][1])]}
-   e.q=[qx/NM,qy/NM];e.node=cur;
-   if(e.qd){const l=Math.hypot(...e.qd),ox=e.qd[0]/l,oy=e.qd[1]/l,ang=(x,y)=>Math.acos(cl(x*R.dir[0]+y*R.dir[1],-1,1))*180/Math.PI;e.depOK=ang(-ox,-oy)<=115;e.arrOK=ang(ox,oy)<=115}}}
+   e.q=[qx/NM,qy/NM];e.node=cur;{const nm=edgeName(cur);if(nm)e.lb=nm}
+   if(e.qd)hpDir(e,R)}
+  // one holding point per taxiway: drop outer CAT II/III positions and duplicates on the same junction
+  const L=ENT[id],keep=[];for(const e of L.slice().sort((a,b)=>Math.abs((a.q[0]-R.T0.x)*R.dir[1]-(a.q[1]-R.T0.y)*R.dir[0])-Math.abs((b.q[0]-R.T0.x)*R.dir[1]-(b.q[1]-R.T0.y)*R.dir[0]))){
+   if(keep.some(k=>k.side===e.side&&(k.node===e.node||Math.hypot(k.q[0]-e.q[0],k.q[1]-e.q[1])*NM<70||(k.lb&&k.lb===e.lb&&Math.abs(k.s-e.s)*NM<90))))continue;keep.push(e)}
+  ENT[id]=L.filter(e=>keep.includes(e))}
  for(const a of ac)if(a.ph==='gate'&&a.gate.h!=null)a.hdg=a.gate.h}
 
 // ---- routing on the real taxiway graph (replaces the free-space grid search for ground movement)
@@ -2066,6 +2080,13 @@ function mapOver(){const W=cv.clientWidth,dpr=devicePixelRatio||1,Rg=view.r,k=W/
   cx.textAlign='left'}
  cx.restore()}}
 {const st=document.createElement('style');st.textContent='.row:has(>button[data-f]){flex-wrap:nowrap!important;gap:6px}.row:has(>button[data-f]) button{padding:8px 11px;font-size:13px;white-space:nowrap}@media(max-width:1400px){.row:has(>button[data-f])>.small{display:none}}';document.head.appendChild(st)}
+/* v28: stand/taxiway data clean-up – MARS stands block each other, no taxiway labels on runways */
+for(const k in DATA){const d=DATA[k];if(!d||!d.lb||!d.rw)continue;
+ d.lb=d.lb.filter(l=>!d.rw.some(r=>{const ax=r.a[0],ay=r.a[1],bx=r.b[0],by=r.b[1],L=Math.hypot(bx-ax,by-ay),ux=(bx-ax)/L,uy=(by-ay)/L,s=(l[1]-ax)*ux+(l[2]-ay)*uy,o=Math.abs((l[1]-ax)*uy-(l[2]-ay)*ux);return s>-30&&s<L+30&&o<Math.max(r.w,45)/2+12}))}
+{const _pg=pickGate;pickGate=function(...a){const tmp=[];try{
+  for(const g of gates){if(!g.mars){g.mars=gates.filter(h=>h!==g&&Math.hypot(h.x-g.x,h.y-g.y)*NM<26)}}
+  for(const g of gates)if(!g.closed&&!g.use&&g.mars.some(h=>h.use)){g.closed=true;tmp.push(g)}
+  return _pg(...a)}finally{for(const g of tmp)g.closed=false}}}
 
 buildMenu();
 </script>
