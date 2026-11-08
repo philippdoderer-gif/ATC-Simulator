@@ -5,7 +5,7 @@
  #game .bar{position:sticky;top:0;z-index:30;background:rgba(6,11,20,.92);backdrop-filter:blur(8px);overflow-x:auto;flex-wrap:nowrap;white-space:nowrap;padding:6px 4px}
  #game .bar button{flex:0 0 auto;padding:7px 10px}#game .bar #ttl{flex:0 0 auto;max-width:none;font-size:12px;padding:0 8px}
  #game .hud{grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;margin-bottom:4px}#game .hud>div{padding:3px 5px}#game .hud b{font-size:14px!important}#game .hud i{font-size:7px;letter-spacing:.04em;white-space:nowrap;overflow:hidden}#game .hud b,#game .hud #clk{white-space:nowrap;font-size:12px!important}#game .hud>div{min-width:0;overflow:hidden}
- canvas#cv{aspect-ratio:auto;height:calc(100dvh - var(--sh) - 112px);min-height:200px;border-radius:12px}
+ #game .left{display:flex;justify-content:center;background:#050c17;border-radius:12px}canvas#cv{aspect-ratio:auto;border-radius:12px}
  #game .right{position:fixed;left:0;right:0;bottom:0;height:var(--sh);overflow-y:auto;z-index:40;background:rgba(8,14,26,.97);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:32px 8px 10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 -10px 30px rgba(0,0,0,.5);overscroll-behavior:contain}
  #shH{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--sh) - 24px);z-index:45;width:90px;height:26px;border-radius:14px 14px 0 0;border:1px solid var(--line);border-bottom:0;background:#0c1626;color:var(--dim);font-size:15px;padding:0;line-height:1}
  #game .panel{padding:8px}#ctl{max-height:none!important}
