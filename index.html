@@ -618,7 +618,7 @@ const xAhead=a=>a.path&&PH(a,'taxi','taxiin')?a.path.slice(a.pi).find(p=>p[2]):n
 const sideRw=p=>{const n=D.rw[p[2]-1];return n.n1+'/'+n.n2};
 // ---------------- GROUND
 def('G','Clearance','cl',a=>'Cleared to '+a.city+' via '+sidOf(a)+', climb '+(A.icao==='EGLL'?6000:5000)+' ft, squawk '+sqOf(a),a=>one(O(a)&&PH(a,'gate')&&a.dl&&!a.cl),a=>{a.cl=1;a.req=null;score+=3;const t='cleared to '+a.city+' via '+sidOf(a)+' departure, initial climb '+(A.icao==='EGLL'?6000:5000)+' feet, squawk '+sqOf(a);let rb=t;if(Math.random()<.12){a.sqr=wrongSq(a.sq);rb=t.replace(/squawk \d+$/,'squawk '+a.sqr)}atc(a,t,rb)});
-def('G','Clearance','dg',a=>'Contact Ground '+gndF(a)+' when ready for '+(A.icao==='EGLL'?'pushback':'start-up'),a=>one(O(a)&&PH(a,'gate')&&a.dl&&a.cl),a=>{a.dl=false;a.req=null;a.t=0;const t='contact Ground on '+gndF(a)+' when ready for '+(A.icao==='EGLL'?'pushback':'start-up and pushback');atc(a,t,'contact Ground '+gndF(a)+' when ready');score+=1});
+def('G','Clearance','dg',a=>'Contact Ground '+gndF(a)+' when ready for '+(A.icao==='EGLL'?'pushback':'start-up'),a=>one(O(a)&&PH(a,'gate')&&a.dl&&a.cl),a=>{a.dl=false;a.req=null;a.t=-(54+Math.random()*60);const t='contact Ground on '+gndF(a)+' when ready for '+(A.icao==='EGLL'?'pushback':'start-up and pushback');atc(a,t,'contact Ground '+gndF(a)+' when ready');score+=1});
 def('G','Clearances','su',()=>'Start-up approved',a=>one(O(a)&&PH(a,'gate')&&!a.su),startup);
 const faces=a=>a.gate.fd?[...new Set(a.gate.fd.map(CW))]:['auto'];
 def('G','Clearances','ps',(a,g)=>'Push and start'+(g==='auto'?'':', face '+g),a=>O(a)&&PH(a,'gate')&&!a.su?faces(a):[],(a,g)=>pushStart(a,g,true));
@@ -836,11 +836,15 @@ const _say=say;say=function(s,k){if(/no reply|no instruction/.test(s))SH.miss++;
 let SPK=null;const _atc=atc;atc=function(a,t,r){SPK=a;_atc(a,t,r)};const _ask=ask;ask=function(a,k,t){SPK=a;_ask(a,k,t)};
 let VOICES=[];const BADV=/whisper|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|wobble|zarvox|albert|fred|junior|ralph|kathy|princess|agnes|bruce|vicki|victoria/i,GOODV=/premium|enhanced|natural|neural|online|google|microsoft|siri|daniel|oliver|arthur|serena|samantha|karen|moira|tessa|aaron|nicky|libby|ryan|sonia/i;
 const loadV=()=>{try{let v=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)&&!BADV.test(v.name));const g=v.filter(x=>/GB|US|AU|IE|ZA|IN/i.test(x.lang));const sc=x=>(GOODV.test(x.name)?4:0)+(/compact/i.test(x.name)?-3:0)+(/en-GB/i.test(x.lang)?1:0);VOICES=(g.length?g:v).sort((a,b)=>sc(b)-sc(a)||a.name.localeCompare(b.name));VOICES=VOICES.filter(x=>sc(x)>=sc(VOICES[0])-3).slice(0,6)}catch(e){}};if(window.speechSynthesis){loadV();speechSynthesis.onvoiceschanged=loadV}
+const NATO={A:'Alpha',B:'Bravo',C:'Charlie',D:'Delta',E:'Echo',F:'Foxtrot',G:'Golf',H:'Hotel',I:'India',J:'Juliett',K:'Kilo',L:'Lima',M:'Mike',N:'November',O:'Oscar',P:'Papa',Q:'Quebec',R:'Romeo',S:'Sierra',T:'Tango',U:'Uniform',V:'Victor',W:'Whiskey',X:'X-ray',Y:'Yankee',Z:'Zulu'};
 const DW=['zero','one','two','three','four','five','six','seven','eight','nine'],DS=n=>String(n).split('').map(c=>DW[+c]||c).join(' ');
 function aviaText(s){s=s.replace(/⚠/g,'');
  s=s.replace(/\b(\d{3})\.(\d{1,3})\b/g,(m,a,b)=>DS(a)+' point '+DS(b));
  s=s.replace(/\b(\d{1,2})([LRC])\b/g,(m,n,l)=>DS(n)+' '+({L:'left',R:'right',C:'centre'})[l]);
  s=s.replace(/\bFL\s?(\d{2,3})\b/g,(m,n)=>'flight level '+DS(n));
+ s=s.replace(/\b([A-Z])(\d{1,3})([A-Z]?)\b/g,(m,l,n,x)=>NATO[l]+' '+DS(n)+(x?' '+NATO[x]:''));
+ s=s.replace(/\b(\d{1,3})([A-Z])\b/g,(m,n,l)=>DS(n)+' '+NATO[l]);
+ s=s.replace(/\b([A-Z])\b/g,(m,l)=>NATO[l]);
  s=s.replace(/\b(squawk|QNH|heading|hdg|runway|rwy)\s*(\d+)/gi,(m,w,n)=>w+' '+DS(n));
  s=s.replace(/\b(\d{1,2})(\d)00\b/g,(m,t,h)=>DS(t)+' thousand'+(+h?' '+DS(h)+' hundred':''));
  s=s.replace(/\b(\d+)\s?(kt|kts|knots)\b/gi,(m,n)=>DS(n)+' knots');
@@ -957,6 +961,10 @@ const _bm2=buildMenu;buildMenu=function(){_bm2();let h='';for(const k of Object.
 @media(max-width:600px){.evg{flex-direction:column;align-items:flex-start}}`;document.head.appendChild(s)})();
 // site: stand counts
 (()=>{for(const k of ['MUC','FRA','LHR']){const e=$('n'+k);if(e)e.textContent=DATA[k].st.length}})();
+
+// --- phonetic alphabet in displayed radio calls, and the controller's "readback correct"
+(function(){const _s=say;say=function(t,k){if(k==='plt'||k==='atc')t=t.replace(/(^|[ ,(])([A-Z])(?=[ ,.)]|$)/g,(m,p,l)=>p+NATO[l]);_s(t,k)};
+ const _a=atc;atc=function(a,t,r){_a(a,t,r);if(r!==null)setTimeout(()=>{if(!a.sqr&&!a.gone)say(rc(a)+', readback correct.','atc')},1800)}})();
 
 // ===================== multiplayer (room capability) =====================
 const LOCALCMD=new Set(['tb','tv','tu','tx','info','batch']);
