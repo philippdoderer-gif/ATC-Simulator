@@ -19,7 +19,7 @@ function turnaround(a){const al=AIRL[a.cs.slice(0,3)]||rnd(Object.values(AIRL)),
 // how many aircraft stand at the gates at shift start, departure times follow the airport's departure profile
 function populate(){prepGates();
  // NOTAM: a couple of stands out of service
- const cand=gates.filter(g=>!['CGO','GA','PK','CGA'].includes(g.cat));NOTAM.stands=[];for(let i=0;i<2&&cand.length;i++){const g=cand.splice(Math.random()*cand.length|0,1)[0];g.closed=true;NOTAM.stands.push(g.n)}
+ const cand=gates.filter(g=>!['CGO','GA','PK','CGA'].includes(g.cat));NOTAM.stands=[];for(let i=0;i<0&&cand.length;i++){const g=cand.splice(Math.random()*cand.length|0,1)[0];g.closed=true;NOTAM.stands.push(g.n)}
  const hh=lt((T/3600)%24),night=hh>=22||hh<6,occ=(night?.56:.34)+Math.random()*.08,xtra=(A.CR?Math.round(gates.filter(g=>(g.cat==='CGO'||g.cat==='CGA')&&!g.closed).length*.34):0)+(A.GR?Math.round(gates.filter(g=>(g.cat==='GA'||g.cat==='CGA')&&!g.closed).length*.2):0),n=Math.round(gates.filter(g=>!g.closed&&!['CGO','GA','PK','CGA'].includes(g.cat)).length*occ)+xtra,offs=[];
  let guard=0;while(offs.length<n&&guard++<n*60){const o=240+Math.random()*12*3600,w=.06+prof(ap+'_d',lt(((T+o)/3600)%24));if(Math.random()<w)offs.push(o)}
  offs.sort((p,q)=>p-q);if(offs[0]!=null)offs[0]=180+Math.random()*120;if(offs[1]!=null)offs[1]=Math.min(Math.max(offs[1],420+Math.random()*300),900);
