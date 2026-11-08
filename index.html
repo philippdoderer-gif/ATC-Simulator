@@ -1026,7 +1026,7 @@ async function peerRoom(code,host){await loadPeer();const id='atcsim-'+code,H={}
  if(host){P.set(me,{});peer.on('connection',c=>{c.on('open',()=>{conns.push(c);P.set(c.peer,{});bcastPeers()});
    c.on('data',m=>{if(!m||typeof m!=='object')return;if(m.t==='pres'){P.set(c.peer,m.p||{});bcastPeers()}else if(m.t==='emit'){deliver(m.topic,m.data,c.peer);conns.forEach(o=>o!==c&&o.open&&o.send({t:'emit',topic:m.topic,data:m.data,peer:c.peer}))}});
    c.on('close',()=>{conns=conns.filter(o=>o!==c);const p=P.get(c.peer);P.delete(c.peer);bcastPeers();PH.forEach(f=>f({peers:peersArr(),joined:[],left:[{peer:c.peer,presence:p||{}}],updated:[]}))})})}
- else{hc=peer.connect(id,{reliable:true});await new Promise((ok,no)=>{const t=setTimeout(()=>no(new Error('no session with this code')),12000);hc.on('open',()=>{clearTimeout(t);ok()});peer.on('error',e=>{clearTimeout(t);no(new Error(e.type==='peer-unavailable'?'no session with this code':e.message||e.type))})});
+ else{hc=peer.connect(id,{reliable:true});await new Promise((ok,no)=>{const t=setTimeout(()=>no(new Error('no session with this code')),20000);hc.on('open',()=>{clearTimeout(t);ok()});peer.on('error',e=>{clearTimeout(t);no(new Error(e.type==='peer-unavailable'?'no session with this code':e.message||e.type))})});
   hc.on('data',m=>{if(!m||typeof m!=='object')return;if(m.t==='peers'){P.clear();m.list.forEach(([k,v])=>P.set(k,v));firePeers()}else if(m.t==='emit')deliver(m.topic,m.data,m.peer)});
   hc.on('close',()=>{const hp=id;PH.forEach(f=>f({peers:[],joined:[],left:[{peer:hp,presence:{host:true}}],updated:[]}))})}
  return{name:code,
@@ -1035,11 +1035,42 @@ async function peerRoom(code,host){await loadPeer();const id='atcsim-'+code,H={}
   presence:async p=>{myPres=Object.assign(myPres,p);P.set(me,myPres);if(host)bcastPeers();else if(hc&&hc.open)hc.send({t:'pres',p:myPres})},
   onPeers:f=>{PH.push(f);setTimeout(()=>f({peers:peersArr(),joined:peersArr(),left:[],updated:[]}),0);return()=>{}},peers:peersArr,connected:()=>!!(host||hc&&hc.open),
   leave:async()=>{try{peer.destroy()}catch(e){}}}}
+// ---- standalone transport #1: public MQTT brokers over WebSocket (pure relay, works through any NAT/firewall)
+function loadMqtt(){return new Promise((ok,no)=>{if(window.mqtt)return ok();const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js';s.onload=()=>window.mqtt?ok():no(new Error('network library missing'));s.onerror=()=>no(new Error('could not load the network library'));document.head.appendChild(s)})}
+const MQB=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081'];
+function mqttConn(url,opts){return new Promise((ok,no)=>{let c;try{c=mqtt.connect(url,Object.assign({connectTimeout:6000,reconnectPeriod:0,keepalive:30,clean:true},opts))}catch(e){return no(e)}let done=0;const t=setTimeout(()=>{if(!done){done=1;try{c.end(true)}catch(e){}no(new Error('timeout'))}},7500);c.once('connect',()=>{if(!done){done=1;clearTimeout(t);ok(c)}});c.once('error',e=>{if(!done){done=1;clearTimeout(t);try{c.end(true)}catch(x){}no(e)}})})}
+async function mqttRoom(code,host){await loadMqtt();const base='atcsim-v1/'+code,me=Math.random().toString(36).slice(2,10),H={},PH=[],P=new Map(),seen=new Map(),last=new Map(),buf=new Map();let myPres={},c=null,mid=0,hostSeen=false,timers=[];
+ const will={topic:base+'/p',payload:JSON.stringify({id:me,leave:1}),qos:0,retain:false};let lastErr;
+ for(const u of MQB){try{c=await mqttConn(u,{clientId:'atcsim_'+me,will});break}catch(e){lastErr=e}}
+ if(!c)throw new Error('could not reach the network ('+((lastErr&&lastErr.message)||'blocked')+')');
+ c.options.reconnectPeriod=2000;
+ const dec=p=>typeof p==='string'?p:new TextDecoder().decode(p),pub=(t,o)=>{try{c.publish(base+t,JSON.stringify(o),{qos:0,retain:false})}catch(e){}};
+ const peersArr=()=>[...P.entries()].map(([peer,presence])=>({peer,presence,isMe:peer===me,sameTab:peer===me,by:null,kind:'viewer',guest:false}));
+ const fire=(joined=[],left=[])=>{const pa=peersArr();PH.forEach(f=>f({peers:pa,joined,left,updated:[]}))};
+ const deliver=(topic,data,peer)=>(H[topic]||[]).forEach(f=>{try{f({topic,data,peer,isMe:false,sameTab:false,by:null,kind:'viewer',guest:false})}catch(e){console.warn(e)}});
+ const announce=()=>pub('/p',{id:me,p:myPres,h:host?1:0});
+ const drop=id=>{if(!P.has(id))return;const p=P.get(id);P.delete(id);seen.delete(id);last.delete(id);fire([],[{peer:id,presence:p}])};
+ c.on('message',(topic,payload)=>{let m;try{m=JSON.parse(dec(payload))}catch(e){return}if(!m||m.p===me||m.id===me)return;
+  if(topic===base+'/p'){if(m.leave)return drop(m.id);if(m.h)hostSeen=true;const nw=!P.has(m.id),js=JSON.stringify(m.p||{});P.set(m.id,m.p||{});seen.set(m.id,Date.now());if(nw){announce();fire([{peer:m.id,presence:m.p||{}}],[])}else if(last.get(m.id)!==js)fire();last.set(m.id,js);return}
+  if(topic===base+'/e'){if(m.n){const key=m.p+'/'+m.i;let b=buf.get(key);if(!b){b={parts:[],got:0};buf.set(key,b);if(buf.size>40)buf.delete(buf.keys().next().value)}b.parts[m.k]=m.s;b.got++;if(b.got===m.n){buf.delete(key);try{deliver(m.t,JSON.parse(b.parts.join('')),m.p)}catch(e){}}return}deliver(m.t,m.d,m.p)}});
+ await new Promise((ok,no)=>c.subscribe([base+'/p',base+'/e'],{qos:0},e=>e?no(e):ok()));
+ P.set(me,myPres);announce();
+ const W=ms=>new Promise(r=>setTimeout(r,ms));
+ const fail=m=>{try{c.end(true)}catch(e){}const e=new Error(m);throw e};
+ if(host){await W(1500);if(hostSeen){try{c.end(true)}catch(e){}const e=new Error('this code is already in use');e.noFb=true;throw e}}
+ else{for(let i=0;i<20&&!hostSeen;i++){await W(250);if(i%4===3)announce()}if(!hostSeen)fail('no session with this code')}
+ timers.push(setInterval(announce,3000),setInterval(()=>{const n=Date.now();for(const [id,t] of seen)if(n-t>10000)drop(id)},2500));
+ return{name:code,
+  emit:async(topic,data)=>{const s=JSON.stringify(data===undefined?null:data),Z=30000;if(s.length<=Z)pub('/e',{p:me,t:topic,d:data===undefined?null:data});else{const id=++mid,n=Math.ceil(s.length/Z);for(let k=0;k<n;k++)pub('/e',{p:me,t:topic,i:id,n,k,s:s.slice(k*Z,(k+1)*Z)})}},
+  on:(t,f)=>{(H[t]=H[t]||[]).push(f);return()=>{H[t]=H[t].filter(x=>x!==f)}},
+  presence:async p=>{myPres=Object.assign(myPres,p);P.set(me,myPres);announce()},
+  onPeers:f=>{PH.push(f);setTimeout(()=>f({peers:peersArr(),joined:peersArr(),left:[],updated:[]}),0);return()=>{}},peers:peersArr,connected:()=>!!c.connected,
+  leave:async()=>{timers.forEach(clearInterval);pub('/p',{id:me,leave:1});setTimeout(()=>{try{c.end()}catch(e){}},200)}}}
 // ---- room / lobby
 let PEERS=[];const peerRole=p=>{const q=PEERS.find(x=>x.peer===p);return q&&q.presence&&q.presence.role};
 function staffUpdate(){if(NET.client)return;const s=new Set();for(const p of PEERS){const r=p.presence&&p.presence.role;if(MPR[r])s.add(r)}if(NET.role)s.add(NET.role);NET.staff=s;mpBadge()}
 async function mpConnect(code,role,host){let r=null;if(window.claude&&typeof claude.use==='function'){try{r=await claude.use('room')}catch(e){r=null}}
- const R=r?await r.join('atc-'+code):await peerRoom(code,host);
+ let R=null;if(r)R=await r.join('atc-'+code);else{try{R=await mqttRoom(code,host)}catch(e){if(e.noFb)throw e;console.warn('mqtt:',e.message)}if(!R)R=await peerRoom(code,host)}
  NET.room=R;NET.code=code;NET.role=role;NET.on=true;NET.client=!host;NET.ready=host;
  R.on('st',m=>onChunk('st',m));R.on('pk',m=>onChunk('pk',m));R.on('mv',onMv);R.on('g',onG);R.on('cfg',onCfg);R.on('lg',onLg);R.on('cmd',onCmd);
  R.onPeers(ch=>{PEERS=ch.peers.slice();staffUpdate();mpLobby();if(NET.client&&NET.hostPeer&&ch.left.some(p=>p.peer===NET.hostPeer))say('⚠ The host left the session – the game is frozen. Back to the menu to start a new one.','sys')});
