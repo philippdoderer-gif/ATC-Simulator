@@ -58,7 +58,7 @@ function render(){
  $('bdB').innerHTML=list.map((f,i)=>{const[s,c]=status(f,now,mode),key=mode+i;
   return `<div class="bd-g bd-r">${cells(hm(f.t),5,'w',key+'t')}${cells(f.n,6,'dim',key+'n')}${cells(f.dest,13,'',key+'d')}${dest?cells(f.g,3,'w',key+'g'):'<span></span>'}${cells(s,12,c,key+'s')}</div>`}).join('')||'<div class="bd-note">No more flights today.</div>';
 }
-window.__gen=gen;window.schedPick=function(dep){try{if(typeof T==='undefined')return null;const now=(T/60)%1440,used=new Set(ac.map(x=>x.cs));
+window.__gen=gen;window.__bd={gen,cells,status,hm,lt};window.schedPick=function(dep){try{if(typeof T==='undefined')return null;const now=(T/60)%1440,used=new Set(ac.map(x=>x.cs));
  const l=gen(selAp,dep?'D':'A').filter(f=>f.t>=now-30&&f.t<=now+(dep?600:240)&&!used.has(f.alk+f.num));
  if(!l.length)return null;const f=l[Math.random()*l.length|0];return{dest:f.dc,alk:f.alk,num:f.num}}catch(e){window.__e=e.message;return null}};
 sec.querySelector('.bd-t').onclick=e=>{const b=e.target.closest('button');if(!b)return;mode=b.dataset.m;prev={};sec.querySelectorAll('.bd-t button').forEach(x=>x.classList.toggle('on',x===b));render()};

@@ -2,8 +2,8 @@
 (function(){
 const menu=document.getElementById('menu');if(!menu)return;
 const q=s=>document.querySelector(s);
-const PG=[['play','Play'],['board','Flight board'],['profile','Profile'],['positions','Positions'],['airports','Airports'],['realism','Realism'],['howto','How it works']];
-const MAP={play:['.shero','#setup'],board:['#board'],profile:['#prof'],positions:['#positions'],airports:['#airports'],realism:['#realism'],howto:['#howto']};
+const PG=[['play','Play'],['profile','Profile'],['positions','Positions'],['airports','Airports'],['realism','Realism'],['howto','How it works']];
+const MAP={play:['.shero','#setup'],profile:['#prof'],positions:['#positions'],airports:['#airports'],realism:['#realism'],howto:['#howto']};
 const ALIAS={top:'play',setup:'play',start:'play',prof:'profile'};
 const css=`.pgnav{position:sticky;top:0;z-index:30;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:10px max(16px,calc((100% - 1180px)/2));background:rgba(7,10,21,.9);backdrop-filter:blur(8px);border-bottom:1px solid rgba(170,185,230,.14)}
 .pgnav::-webkit-scrollbar{display:none}
