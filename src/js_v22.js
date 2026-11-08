@@ -26,8 +26,8 @@ const css=`
 `;
 const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
 const sec=document.createElement('section');sec.className='ss';sec.id='board';
-sec.innerHTML='<h2>Live board</h2><div class="bd"><div class="bd-h"><div class="bd-t" role="tablist"><button class="on" data-m="D" role="tab">Departures</button><button data-m="A" role="tab">Arrivals</button></div><div class="bd-clock"><span id="bdT">--:--</span><small id="bdN"></small></div></div><div id="bdH"></div><div id="bdB"></div><div class="bd-note">Schedule for the airport you picked above, at its local time. Flights are typical of the real timetable, not live data.</div></div>';
-const foot=document.querySelector('.sfoot');foot.parentNode.insertBefore(sec,foot);
+sec.innerHTML='<h2>Live board</h2><div class="bd"><div class="bd-h"><div class="bd-t" role="tablist"><button class="on" data-m="D" role="tab">Departures</button><button data-m="A" role="tab">Arrivals</button></div><div class="bd-clock"><span id="bdT">--:--</span><small id="bdN"></small></div></div><div id="bdH"></div><div id="bdB"></div><div class="bd-note">Schedule for the airport you picked above, at its local time. These are the flights you will work in the game: the same callsigns, airlines and destinations appear on frequency. Not live data.</div></div>';
+const pos=document.getElementById('positions');pos.parentNode.insertBefore(sec,pos);sec.style.marginTop='48px';const nl=document.querySelector('.slinks');if(nl)nl.insertBefore(Object.assign(document.createElement('a'),{href:'#board',textContent:'Board'}),nl.children[0]);document.addEventListener('click',e=>{if(e.target.closest('#tsel'))setTimeout(render,80)},true);
 let mode='D',cache={},prev={};
 function rng(s){return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
 function seedOf(str){let h=2166136261;for(const c of str)h=Math.imul(h^c.charCodeAt(0),16777619)>>>0;return h}
@@ -42,7 +42,7 @@ function gen(k,m){
   const n=ia+' '+(m==='D'?100+(rn()*880|0):100+(rn()*880|0));
   const late=rn()<.13?5+(rn()*40|0):0;
   const g=m==='D'?'ABCDEFGH'[rn()*8|0]+(1+(rn()*60|0)):'';
-  out.push({t,n,al:AIRL[al].r,dest:DEST[dest]?DEST[dest].c:dest,late,g,belt:1+(rn()*9|0)});}
+  out.push({t,n,dir:m,alk:al,dc:dest,num:+n.split(' ')[1],al:AIRL[al].r,dest:DEST[dest]?DEST[dest].c:dest,late,g,belt:1+(rn()*9|0)});}
  cache[key]=out;return out}
 function status(f,now,m){const t=f.t+f.late,d=t-now;
  if(m==='D'){if(d<-1)return['Departed','st-na'];if(d<=8)return['Gate closing','st-go'];if(d<=35)return['Boarding','st-go'];if(f.late)return['Late '+String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0'),'st-late'];return['On time','st-ok']}
@@ -51,14 +51,17 @@ function cells(txt,len,cls,key){const s=(txt+' '.repeat(len)).slice(0,len).toUpp
  return '<span class="fl '+(cls||'')+'">'+[...s].map((c,i)=>`<span class="fc${p[i]!==c&&p?' f':''}">${c===' '?'&nbsp;':c.replace('&','&amp;')}</span>`).join('')+'</span>'}
 const hm=t=>String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
 function render(){
- const k=selAp,now=lt(k),dest=mode==='D';
- $('bdT').textContent=hm(now);$('bdN').textContent=AP[k].icao+' local';
+ const k=selAp,sh=+($('stt')||{value:-1}).value,now=sh>=0?sh*60+(new Date().getUTCMinutes()):lt(k),dest=mode==='D';
+ $('bdT').textContent=hm(now);$('bdN').textContent=AP[k].icao+(sh>=0?' · your shift start':' local');
  $('bdH').innerHTML=`<div class="bd-g hd"><span>Time</span><span>Flight</span><span>${dest?'Destination':'From'}</span><span>${dest?'Gate':''}</span><span>Remarks</span></div>`;
  const list=gen(k,mode).filter(f=>f.t+f.late>=now-(dest?15:20)).slice(0,10);
  $('bdB').innerHTML=list.map((f,i)=>{const[s,c]=status(f,now,mode),key=mode+i;
   return `<div class="bd-g bd-r">${cells(hm(f.t),5,'w',key+'t')}${cells(f.n,6,'dim',key+'n')}${cells(f.dest,13,'',key+'d')}${dest?cells(f.g,3,'w',key+'g'):'<span></span>'}${cells(s,12,c,key+'s')}</div>`}).join('')||'<div class="bd-note">No more flights today.</div>';
 }
+window.__gen=gen;window.schedPick=function(dep){try{if(typeof T==='undefined')return null;const now=(T/60)%1440,used=new Set(ac.map(x=>x.cs));
+ const l=gen(selAp,dep?'D':'A').filter(f=>f.t>=now-30&&f.t<=now+(dep?600:240)&&!used.has(f.alk+f.num));
+ if(!l.length)return null;const f=l[Math.random()*l.length|0];return{dest:f.dc,alk:f.alk,num:f.num}}catch(e){window.__e=e.message;return null}};
 sec.querySelector('.bd-t').onclick=e=>{const b=e.target.closest('button');if(!b)return;mode=b.dataset.m;prev={};sec.querySelectorAll('.bd-t button').forEach(x=>x.classList.toggle('on',x===b));render()};
 const ob=buildMenu;buildMenu=function(){ob.apply(this,arguments);if(window.__bdAp!==selAp){window.__bdAp=selAp;prev={}}render()};
-render();setInterval(()=>{if(!$('menu').hidden)render()},20000);
+let sig='';setInterval(()=>{const s=selAp+'|'+($('stt')||{}).value;if(s!==sig){sig=s;if(!$('menu').hidden){prev={};render()}}},300);render();setInterval(()=>{if(!$('menu').hidden)render()},20000);
 })();
