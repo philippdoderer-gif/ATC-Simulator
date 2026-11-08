@@ -379,7 +379,7 @@ function draw(){const W=cv.clientWidth,dpr=devicePixelRatio||1;if(cv.width!==Mat
   const TWD=22*m;cx.lineCap='square';cx.lineJoin='miter';
   const NT=isNight();cx.strokeStyle=NT?'#4a525c':'#aeb7c2';cx.lineWidth=TWD+2.6*lw;cx.stroke(g.tx);cx.strokeStyle='#6a93c2';cx.lineWidth=2.6*lw;cx.stroke(g.ap);if(g.ln)cx.stroke(g.ln);cx.fillStyle='#6a93c2';cx.fill(g.ap);if(g.ln)cx.fill(g.ln);
   cx.fillStyle=NT?'#1b2e44':'#2a4766';cx.fill(g.ap);if(g.ln)cx.fill(g.ln);cx.strokeStyle=NT?'#2f353d':'#6f7a87';cx.lineWidth=TWD;cx.stroke(g.tx);cx.fillStyle='#071226';cx.fill(g.gh);cx.strokeStyle='#4f74a0';cx.lineWidth=1.4*lw;cx.stroke(g.gh);cx.lineCap='butt';
-  if(Rg<=1.3&&g.sl){cx.strokeStyle=NT?'rgba(255,209,102,.3)':'rgba(255,209,102,.6)';cx.lineWidth=Math.max(.7*lw,.8*m);cx.stroke(g.sl)}if(Rg<=3){cx.strokeStyle=NT?'rgba(255,209,102,.35)':'rgba(255,209,102,.8)';cx.lineWidth=Math.max(.9*lw,1.2*m);cx.stroke(g.tx);if(NT&&Rg<=1.2){cx.strokeStyle='rgba(120,255,160,.95)';cx.lineCap='round';cx.lineWidth=Math.max(2.2*lw,2*m);cx.setLineDash([.1*m,15*m]);cx.stroke(g.tx);cx.setLineDash([]);cx.lineCap='butt'}}
+  if(Rg<=1.3&&g.sl){cx.strokeStyle=NT?'rgba(200,180,110,.2)':'rgba(214,190,110,.4)';cx.lineWidth=Math.max(.7*lw,.8*m);cx.stroke(g.sl)}if(Rg<=3){cx.strokeStyle=NT?'rgba(200,180,110,.22)':'rgba(214,190,110,.4)';cx.lineWidth=Math.max(.7*lw,.8*m);cx.stroke(g.tx)}
   cx.lineJoin='round';cx.strokeStyle=NT?'#7d8aa0':'#c3cede';cx.lineWidth=2*lw;cx.stroke(g.bd);cx.fillStyle=NT?'#4b5466':'#7d8798';cx.fill(g.bd);cx.strokeStyle='#e6edf7';cx.lineWidth=2.6*lw;cx.stroke(g.tm);cx.fillStyle='#aab6c8';cx.fill(g.tm);
   for(const r of D.rw){const a=[r.a[0]/NM,r.a[1]/NM],b=[r.b[0]/NM,r.b[1]/NM],w=Math.max(r.w,60)*m,L=Math.hypot(b[0]-a[0],b[1]-a[1]),ux=(b[0]-a[0])/L,uy=(b[1]-a[1])/L,nx=-uy,ny=ux,ln=(p,q,wd,col,dash)=>{cx.strokeStyle=col;cx.lineWidth=wd;cx.setLineDash(dash||[]);cx.beginPath();cx.moveTo(p[0],p[1]);cx.lineTo(q[0],q[1]);cx.stroke();cx.setLineDash([])};
    cx.lineCap='butt';ln(a,b,w+4*m,'#7f9cc2');ln(a,b,w,'#0c1118');if(NT&&det){for(const sg of[-1,1]){const o=sg*(w/2+1*m);cx.lineCap='round';ln([a[0]+nx*o,a[1]+ny*o],[b[0]+nx*o,b[1]+ny*o],Math.max(2.4*lw,2.5*m),'rgba(255,240,200,.95)',[.1*m,60*m]);cx.lineCap='butt'}}
@@ -426,11 +426,12 @@ function buildTG(){
     if(t>-et&&t<1+et&&u>-eu&&u<1+eu){cuts[i].push(cl(t,0,1));cuts[j].push(cl(u,0,1));continue}}
    // endpoint lying on the other segment
    for(const[px,py,tgt,oth] of[[cx_,cy,i,j],[dx,dy,i,j],[ax,ay,j,i],[bx,by,j,i]]){const s=S[tgt],r=segDist(px,py,s[0],s[1],s[2],s[3]);if(r[0]<6)cuts[tgt].push(r[3])}}}
- const N=[],H=new Map(),E=[],adj=[],seen=new Set();
+ const N=[],H=new Map(),E=[],adj=[],seen=new Set();let curVis=1;
  const nid=(x,y)=>{const gx=Math.floor(x/10),gy=Math.floor(y/10);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const L=H.get((gx+a)+','+(gy+b));if(L)for(const q of L)if(Math.hypot(N[q][0]-x,N[q][1]-y)<7)return q}
   N.push([x,y]);adj.push([]);const kk=gx+','+gy;if(!H.has(kk))H.set(kk,[]);H.get(kk).push(N.length-1);return N.length-1};
- const addE=(u,v)=>{if(u===v)return;const kk=u<v?u+'_'+v:v+'_'+u;if(seen.has(kk))return;seen.add(kk);const L=Math.hypot(N[u][0]-N[v][0],N[u][1]-N[v][1]);E.push({a:u,b:v,L,nm:null});adj[u].push(E.length-1);adj[v].push(E.length-1)};
- S.forEach((s,i)=>{const ts=[...new Set(cuts[i].map(t=>Math.round(t*1e4)/1e4))].sort((p,q)=>p-q);let prev=null;for(const t of ts){const k=nid(s[0]+(s[2]-s[0])*t,s[1]+(s[3]-s[1])*t);if(prev!==null)addE(prev,k);prev=k}});
+ const addE=(u,v)=>{if(u===v)return;const kk=u<v?u+'_'+v:v+'_'+u;if(seen.has(kk))return;seen.add(kk);const L=Math.hypot(N[u][0]-N[v][0],N[u][1]-N[v][1]);E.push({a:u,b:v,L,nm:null,vis:curVis});adj[u].push(E.length-1);adj[v].push(E.length-1)};
+ S.forEach((s,i)=>{curVis=i<D.tp.length?1:0;const ts=[...new Set(cuts[i].map(t=>Math.round(t*1e4)/1e4))].sort((p,q)=>p-q);let prev=null;for(const t of ts){const k=nid(s[0]+(s[2]-s[0])*t,s[1]+(s[3]-s[1])*t);if(prev!==null)addE(prev,k);prev=k}});
+ curVis=0;
  // close small gaps: dead ends get linked to the nearest other node within 40 m
  for(let i=0;i<N.length;i++){if(adj[i].length!==1)continue;let bj=-1,bd=40;for(let j=0;j<N.length;j++){if(j===i||!adj[j].length)continue;const d=Math.hypot(N[i][0]-N[j][0],N[i][1]-N[j][1]);if(d<bd&&!adj[i].some(e=>E[e].a===j||E[e].b===j)){bd=d;bj=j}}if(bj>=0)addE(i,bj)}
  // join isolated pieces (stand lanes drawn separately on the chart) to the main network
@@ -453,7 +454,7 @@ function buildTG(){
  // ---- stands: nose towards the building, pushback point on the apron lane behind the tail
  const bdc=(D.bd||[]).map(b=>{let x=0,y=0;const m=b.length/2;for(let i=0;i<b.length;i+=2){x+=b[i];y+=b[i+1]}return[x/m,y/m]});
  for(const g of gates){const gx=g.x*NM,gy=g.y*NM;let best=null;
-  for(const e of E){const r=segDist(gx,gy,N[e.a][0],N[e.a][1],N[e.b][0],N[e.b][1]);if(r[0]>=18&&(!best||r[0]<best[0])){if(g.hh!=null){const tx=-SIN(g.hh),ty=-COS(g.hh);if(((r[1]-gx)*tx+(r[2]-gy)*ty)<r[0]*.6)continue}best=[r[0],r[1],r[2],e]}}
+  for(const only of[1,0]){best=null;for(const e of E){if(only&&!e.vis)continue;const r=segDist(gx,gy,N[e.a][0],N[e.a][1],N[e.b][0],N[e.b][1]);if(r[0]>=18&&(!best||r[0]<best[0])){if(g.hh!=null){const tx=-SIN(g.hh),ty=-COS(g.hh);if(((r[1]-gx)*tx+(r[2]-gy)*ty)<r[0]*.6)continue}best=[r[0],r[1],r[2],e]}}if(best&&best[0]<220)break}
   let h,pb,ld;
   if(best&&best[0]<220){h=g.hh!=null?g.hh:brg(gx-best[1],gy-best[2]);pb=[best[1],best[2]];const e=best[3];ld=brg(N[e.b][0]-N[e.a][0],N[e.b][1]-N[e.a][1])}
   else{let c=null,cd=1e9;for(const q of bdc){const d=Math.hypot(q[0]-gx,q[1]-gy);if(d<cd){cd=d;c=q}}h=c?brg(c[0]-gx,c[1]-gy):0;pb=[gx-SIN(h)*60,gy-COS(h)*60];ld=nrm(h+90)}
