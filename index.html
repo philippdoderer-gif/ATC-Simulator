@@ -964,7 +964,7 @@ const _bm2=buildMenu;buildMenu=function(){_bm2();let h='';for(const k of Object.
 
 // --- phonetic alphabet in displayed radio calls, and the controller's "readback correct"
 (function(){const _s=say;say=function(t,k){if(k==='plt'||k==='atc')t=t.replace(/(^|[ ,(])([A-Z])(?=[ ,.)]|$)/g,(m,p,l)=>p+NATO[l]);_s(t,k)};
- const _a=atc;atc=function(a,t,r){_a(a,t,r);if(r!==null)setTimeout(()=>{if(!a.sqr&&!a.gone)say(rc(a)+', readback correct.','atc')},1800)}})();
+ const _a=atc;atc=function(a,t,r){if(a.rbp&&!a.sqr&&!/^negative/i.test(t)){t='readback correct, '+t}a.rbp=false;_a(a,t,r);if(r!==null)setTimeout(()=>{a.rbp=!a.sqr},700)}})();
 
 // ===================== multiplayer (room capability) =====================
 const LOCALCMD=new Set(['tb','tv','tu','tx','info','batch']);
