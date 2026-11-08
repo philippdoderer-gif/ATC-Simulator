@@ -1516,6 +1516,19 @@ setInterval(()=>{if(!NET.spec||$('game').hidden)return;const t=$('ttl');if(t&&!/
   const c=b&&innerWidth>=820?b.querySelector('.clz'):null;
   if(c){if(!f){f=document.createElement('div');f.id='cfb';f.className='panel';g.appendChild(f)}f.hidden=false;const hd=c.previousElementSibling;f.innerHTML='';if(hd&&hd.classList.contains('cgl'))f.append(hd);f.append(c);g.classList.add('hasCfb')}
   else if(f&&(MODE!=='C'||CTR.id==='none'||innerWidth<820)){f.hidden=true;f.innerHTML='';g.classList.remove('hasCfb')}}catch(e){console.warn(e)}}}
+// ---- Center: compact command menu: category chips (Approach / Heading / Waypoints / Altitude / Speed / Info), options shown for one category at a time
+const CMP={k:'Heading'};
+{const st=document.createElement('style');st.textContent=`#cmpbar{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 6px}#cmpbar button{padding:8px 14px;border-radius:999px;font-size:14px;font-weight:600}#cmpbar button.on{background:var(--sel);color:#10151f;border-color:var(--sel)}#cmpbar button.em{opacity:.45}#cmpbody.cb{margin-top:2px}`;document.head.appendChild(st);
+ const cat=t=>/^Direct |^Hold at /.test(t)?'Waypoints':/^(Radar contact|Cleared ILS)/.test(t)?'Approach':/^(Turn|Fly|Orbit)/.test(t)?'Heading':/^(Descend|Climb|Maintain)/.test(t)?'Altitude':/^(Speed|Normal speed|Reduce|Increase)/.test(t)?'Speed':'Info';
+ const ORD=['Approach','Heading','Waypoints','Altitude','Speed','Info'];
+ const _u=ui;ui=function(){_u();try{if(MODE!=='C')return;const c=$('ctl');if(!c||c.querySelector('#cmpbar'))return;const cbs=[...c.querySelectorAll(':scope>.cb')];if(!cbs.length)return;
+  const G={};for(const cb of cbs)for(const b of [...cb.children])(G[cat(b.textContent.trim())]=G[cat(b.textContent.trim())]||[]).push(b);
+  const keys=ORD.filter(k=>G[k]&&G[k].length);if(!keys.length)return;if(!keys.includes(CMP.k))CMP.k=keys[0];
+  const bar=document.createElement('div');bar.id='cmpbar';const body=document.createElement('div');body.id='cmpbody';body.className='cb';
+  const show=k=>{CMP.k=k;body.innerHTML='';G[k].forEach(b=>body.appendChild(b));bar.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.k===k))};
+  for(const k of keys){const x=document.createElement('button');x.dataset.k=k;x.textContent=k+(k==='Heading'||k==='Altitude'||k==='Speed'?'':'');x.onclick=e=>{e.stopPropagation();show(k)};bar.appendChild(x)}
+  const first=cbs[0];c.querySelectorAll(':scope>.cgl').forEach(h=>{if(h.nextElementSibling&&h.nextElementSibling.classList.contains('cb'))h.remove()});
+  first.before(bar);bar.after(body);cbs.forEach(cb=>cb.remove());show(CMP.k)}catch(e){console.warn(e)}}}
 
 // ===================== Center: draft steppers, typed instructions, fill-in phrases =====================
 const FX=()=>Object.keys(WP).filter(n=>!/^(IF|FA)/.test(n)).sort();
