@@ -48,9 +48,15 @@ const deselAfter=()=>{if(SET.desel&&MODE==='C'&&!BATCH)setTimeout(()=>{sel=null;
   first.before(bar);bar.after(body);cbs.forEach(cb=>cb.remove());show(CMP.k)}catch(e){console.warn(e)}}}
 // ---- Center: real-radar style data block: callsign / FL + trend + ground speed / assigned values / type & destination
 function radarBlock(a,p,px,py,col,mine){
+ if(!a.rc){cx.save();cx.font='700 11px ui-monospace,Menlo,monospace';cx.fillStyle=a.req==='radar'?'#ffb454':col;cx.globalAlpha=.55+.45*(a.req==='radar'?Math.abs(Math.sin(performance.now()/350)):.4);cx.fillText(a.req==='radar'?a.cs+'  CHECK-IN':'UNKNOWN',px+10,py-6);cx.font='500 10px ui-monospace,Menlo,monospace';cx.globalAlpha=.7;cx.fillText('no radar contact',px+10,py+5);cx.restore();return}
  const fl=Math.round(p.alt/100),altT=p.alt>=5500?'FL'+pad(fl,3):String(Math.round(p.alt/100)*100),tr=a.ta>p.alt+50?'↑':a.ta<p.alt-50?'↓':'→',gs=Math.round(p.s),wk=typeof WKC==='function'?WKC(a.type):'';
  cx.save();cx.strokeStyle=col;cx.globalAlpha=.55;cx.lineWidth=1;cx.beginPath();cx.moveTo(px+4,py-4);cx.lineTo(px+9,py-9);cx.stroke();cx.globalAlpha=1;
  cx.font='700 11px ui-monospace,Menlo,monospace';cx.fillStyle=col;cx.fillText(a.cs+(wk&&wk!=='M'?' '+wk:''),px+10,py-6);
  cx.font='600 10px ui-monospace,Menlo,monospace';cx.fillText(altT+tr+' '+gs+'kt',px+10,py+5);
  let l3='';if(mine||a===sel){const parts=[];if(Math.abs(a.ta-p.alt)>50)parts.push('▸'+(a.ta>=5500?'FL'+pad(Math.round(a.ta/100),3):Math.round(a.ta/100)*100));if(Math.abs(((a.th-p.h+540)%360)-180)>2)parts.push('H'+pad(Math.round(a.th)%360||360,3));if(Math.abs(a.ts-gs)>5)parts.push('S'+Math.round(a.ts));l3=parts.join(' ')}
  cx.globalAlpha=.9;cx.fillStyle=l3?'#ffb454':col;cx.font='500 10px ui-monospace,Menlo,monospace';cx.fillText(l3||(a.type+' '+(a.ovf?a.ex[0]:a.dep?a.fix:A.icao.slice(0,4))),px+10,py+16);cx.restore()}
+
+// ---- Center: overflights also check in on the frequency; aircraft list sits at the top of the right column
+{const _st=step;step=function(dt){_st(dt);try{if(MODE==='C'||CMB||HS('C'))for(const a of ac){if(a.ovf&&a.ph==='air'&&a.ctrl==='C'&&!a.rc&&!a.cki){if(a.cdl==null)a.cdl=T+4+Math.random()*30;if(T>=a.cdl){a.cki=1;ask(a,'radar','flight level '+Math.round(a.fl)+', via '+(a.ex?a.ex[0]:'')+'.')}}}}catch(e){}}}
+{const _u2=ui;ui=function(){_u2();try{const R=document.querySelector('#game .right'),sp=$('strips').closest('.panel');if(!R||!sp)return;
+  if(MODE==='C'&&R.firstElementChild!==sp)R.prepend(sp);else if(MODE!=='C'&&sp.previousElementSibling&&$('seq')&&sp.nextElementSibling!==$('seq'))R.insertBefore(sp,$('seq'))}catch(e){}}}
