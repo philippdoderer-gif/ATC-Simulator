@@ -1885,7 +1885,15 @@ function record(){try{if(typeof gradeOf!=='function')return;const r=gradeOf();if
  const nb=[];for(const b of BG)if(!p.badges[b[0]]&&b[3](p,{mov:r.mov,viol,g:r.g})){p.badges[b[0]]=new Date().toISOString().slice(0,10);nb.push(b[1])}
  sv(p);render();if(nb.length&&typeof say==='function')say('New badge: '+nb.join(', '),'sys')}catch(e){}}
 document.getElementById('endB').addEventListener('click',record,true);
-const css=`#prof{margin-top:48px}
+const css=`#profPage{position:fixed;inset:0;z-index:9000;overflow:auto;background:radial-gradient(900px 420px at 10% 110%,rgba(255,150,50,.16),transparent 62%),radial-gradient(1000px 520px at 90% -10%,rgba(88,110,230,.28),transparent 60%),#070a15;color:var(--fg,#f3efe7)}
+#profPage[hidden]{display:none}
+.pp-top{position:sticky;top:0;display:flex;align-items:center;gap:16px;padding:14px max(16px,calc((100% - 1100px)/2));background:rgba(7,10,21,.92);backdrop-filter:blur(8px);z-index:2;border-bottom:1px solid rgba(170,185,230,.14)}
+.pp-top button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:inherit;border-radius:99px;padding:8px 16px;font:600 14px var(--disp);cursor:pointer}
+.pp-top span{font:600 16px var(--disp);color:#9aa3bd}
+.pp-in{max-width:1100px;margin:0 auto;padding:28px 16px 80px}
+#prof h2{font:700 clamp(30px,5vw,46px) var(--disp);margin:0 0 20px}
+.pf-io{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.pf-io button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:inherit;border-radius:99px;padding:7px 14px;font:600 13px var(--disp);cursor:pointer}
+.pf-io textarea{width:100%;margin-top:8px;min-height:90px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.35);color:inherit;font:12px var(--mono);padding:8px}
 .pf{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:18px}
 .pf>div{align-self:start;border-radius:22px;border:1px solid var(--m-line,rgba(170,185,230,.14));background:var(--m-glass,rgba(20,26,50,.8));padding:20px}
 .pf-id{display:flex;gap:16px;align-items:center}
@@ -1904,9 +1912,17 @@ const css=`#prof{margin-top:48px}
 .pf-rs{background:none;border:0;color:#8d97b4;font-size:12px;text-decoration:underline;cursor:pointer;margin-top:14px}
 @media(max-width:820px){.pf{grid-template-columns:1fr}}`;
 const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
-const sec=document.createElement('section');sec.className='ss';sec.id='prof';
-const bd=document.getElementById('board');bd.parentNode.insertBefore(sec,bd);
-const nl=document.querySelector('.slinks');if(nl)nl.insertBefore(Object.assign(document.createElement('a'),{href:'#prof',textContent:'Profile'}),nl.children[0]);
+const page=document.createElement('div');page.id='profPage';page.hidden=true;
+page.innerHTML='<div class="pp-top"><button id="ppBack" type="button">‹ Back to menu</button><span>Pilot profile</span></div><div class="pp-in"><section id="prof"></section></div>';
+document.body.appendChild(page);const sec=page.querySelector('#prof');
+const nl=document.querySelector('.slinks');let pl=null;if(nl){pl=Object.assign(document.createElement('a'),{href:'#profile',textContent:'Profile'});nl.insertBefore(pl,nl.children[0])}
+function openP(){render();page.hidden=false;document.documentElement.style.overflow='hidden';page.scrollTop=0;if(location.hash!=='#profile')history.pushState(null,'','#profile')}
+function closeP(){page.hidden=true;document.documentElement.style.overflow='';if(location.hash==='#profile')history.replaceState(null,'',location.pathname+location.search)}
+const hb=document.querySelector('.hbtns');if(hb){const b=document.createElement('a');b.href='#profile';b.className='ghost';b.textContent='My profile';b.addEventListener('click',e=>{e.preventDefault();openP()});hb.appendChild(b)}
+if(pl)pl.addEventListener('click',e=>{e.preventDefault();openP()});
+page.querySelector('#ppBack').onclick=closeP;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!page.hidden)closeP()});
+window.addEventListener('popstate',()=>{if(location.hash==='#profile')openP();else if(!page.hidden){page.hidden=true;document.documentElement.style.overflow=''}});
+window.openProfile=openP;
 const MN={G:'Ground',T:'Tower',C:'Center',X:'Tower+Ground'},AN={MUC:'Munich',FRA:'Frankfurt',LHR:'Heathrow'};
 function render(){const p=ld();let nm='';try{nm=localStorage.getItem('atc_name')||''}catch(e){}
  const ri=rankOf(p.tot.xp),nx=RANKS[ri+1],cur=RANKS[ri][0],pc=nx?Math.round((p.tot.xp-cur)/(nx[0]-cur)*100):100;
@@ -1915,13 +1931,17 @@ function render(){const p=ld();let nm='';try{nm=localStorage.getItem('atc_name')
  sec.innerHTML=`<h2>Your profile</h2><div class="pf"><div><div class="pf-id"><div class="pf-av" id="pfAv">${(nm||'P').slice(0,2).toUpperCase()}</div><div style="flex:1;min-width:0"><input id="pfNm" maxlength="14" placeholder="Your callsign" value="${nm.replace(/"/g,'')}" aria-label="Callsign"><div class="pf-rank">${RANKS[ri][1]}</div></div></div>
  <div class="pf-bar"><i style="width:${pc}%"></i></div><div class="pf-sm">${p.tot.xp} XP${nx?' · next rank '+nx[1]+' at '+nx[0]:' · top rank reached'}</div>
  <div class="pf-st"><div><b>${p.tot.sh}</b><span>Shifts</span></div><div><b>${p.tot.land+p.tot.dpt}</b><span>Movements</span></div><div><b>${p.tot.hrs.toFixed(1)}</b><span>Hours on frequency</span></div><div><b>${p.tot.viol}</b><span>Violations</span></div></div>
- <button class="pf-rs" id="pfRs">Reset profile</button><div class="pf-sm" style="margin-top:8px">Saved on this device only. Press End on a shift to record it.</div></div>
+ <div class="pf-io"><button id="pfEx">Export profile</button><button id="pfIm">Import profile</button><button id="pfCp" hidden>Copy</button></div><textarea id="pfTx" hidden spellcheck="false"></textarea><button class="pf-rs" id="pfRs">Reset profile</button><div class="pf-sm" style="margin-top:8px">Saved on this device only. Press End on a shift to record it.</div></div>
  <div><h4>Badges (${Object.keys(p.badges).length}/${BG.length})</h4><div class="pf-bd">${BG.map(b=>`<div class="pf-b${p.badges[b[0]]?' on':''}"><b>${b[1]}</b><span>${b[2]}</span></div>`).join('')}</div>
  <h4>Best scores</h4>${rows?`<table class="pf-t"><tr><th>Airport</th><th>Position</th><th>Score</th><th>Grade</th><th>Shifts</th></tr>${rows}</table>`:'<div class="pf-sm">No shifts recorded yet.</div>'}
  ${hs?`<h4>Recent shifts</h4><table class="pf-t"><tr><th>Date</th><th>Airport</th><th>Position</th><th>Score</th><th>Grade</th></tr>${hs}</table>`:''}</div></div>`;
  const n=document.getElementById('pfNm');n.onchange=()=>{const v=(n.value||'').trim().slice(0,14);try{if(v)localStorage.setItem('atc_name',v);else localStorage.removeItem('atc_name')}catch(e){}if(typeof NET!=='undefined'&&v)NET.name=v;document.getElementById('pfAv').textContent=(v||'P').slice(0,2).toUpperCase()};
+ const tx=document.getElementById('pfTx'),cp=document.getElementById('pfCp');let imp=false;
+ document.getElementById('pfEx').onclick=()=>{imp=false;tx.hidden=false;cp.hidden=false;cp.textContent='Copy';tx.value=btoa(unescape(encodeURIComponent(JSON.stringify(ld()))));tx.select()};
+ cp.onclick=()=>{if(imp){try{const o=JSON.parse(decodeURIComponent(escape(atob(tx.value.trim()))));if(!o.tot)throw 0;sv(o);render()}catch(e){alert('This code is not a valid profile.')}}else{tx.select();try{navigator.clipboard.writeText(tx.value);cp.textContent='Copied'}catch(e){document.execCommand('copy')}}};
+ document.getElementById('pfIm').onclick=()=>{imp=true;tx.hidden=false;cp.hidden=false;cp.textContent='Load this profile';tx.value='';tx.placeholder='Paste your profile code here';tx.focus()};
  document.getElementById('pfRs').onclick=()=>{if(confirm('Delete all profile statistics on this device?')){try{localStorage.removeItem(KEY)}catch(e){}render()}}}
-render();
+render();if(location.hash==='#profile')openP();
 })();
 
 buildMenu();
