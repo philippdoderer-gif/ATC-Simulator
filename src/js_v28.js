@@ -1,3 +1,8 @@
+// small paved blobs at taxiway junctions (fillet polygons far from any stand) look like stains: drop them
+{const area=p=>{let a=0;for(let i=0,j=p.length-2;i<p.length;j=i,i+=2)a+=(p[j]*p[i+1]-p[i]*p[j+1]);return Math.abs(a/2)};
+ for(const k in DATA){const d=DATA[k];if(!d||!d.ap||!d.st)continue;const n0=d.ap.length;
+  d.ap=d.ap.filter(p=>{const A=area(p);if(A>6000)return true;let cx=0,cy=0;for(let i=0;i<p.length;i+=2){cx+=p[i];cy+=p[i+1]}cx/=p.length/2;cy/=p.length/2;
+   return d.st.some(s=>Math.hypot(s[0]-cx,s[1]-cy)<160)})}}
 /* v28: stand/taxiway data clean-up – MARS stands block each other, no taxiway labels on runways */
 for(const k in DATA){const d=DATA[k];if(!d||!d.lb||!d.rw)continue;
  if(d.st)d.st=d.st.filter(s=>!(k==='FRA'&&(s[2]==='N'||s[2]==='N4')));
@@ -24,3 +29,15 @@ for(const k in DATA){const d=DATA[k];if(!d||!d.lb||!d.rw)continue;
   let d=db-6-len/2;if(REM.includes(g.cat)||g.cat==='R')d=Math.min(0,d);d=Math.max(-45,Math.min(55,d));if(Math.abs(d)<2)continue;
   const h=g.h*Math.PI/180;a.x+=Math.sin(h)*d/NM;a.y+=Math.cos(h)*d/NM}};
  const _d=draw;draw=function(){try{fix()}catch(e){}_d()}}
+// taxiways that stop short of a runway: draw them on to the runway centreline
+{const stubs=k=>{const d=DATA[k];if(!d||!d.tp)return[];const key=(x,y)=>Math.round(x/3)+','+Math.round(y/3),cnt=new Map();
+  for(const s of d.tp)for(const [x,y] of[[s[0],s[1]],[s[2],s[3]]]){const q=key(x,y);cnt.set(q,(cnt.get(q)||0)+1)}
+  const near=(x,y)=>{for(const s of d.tp)for(const[a,b]of[[s[0],s[1]],[s[2],s[3]]])if(Math.hypot(a-x,b-y)<6&&!(a===x&&b===y))return true;return false};
+  const out=[];for(const s of d.tp)for(const [ex,ey,ox,oy] of[[s[2],s[3],s[0],s[1]],[s[0],s[1],s[2],s[3]]]){if(cnt.get(key(ex,ey))!==1||near(ex,ey))continue;
+   const L=Math.hypot(ex-ox,ey-oy);if(L<3)continue;const ux=(ex-ox)/L,uy=(ey-oy)/L;
+   for(const r of d.rw){const ax=r.a[0],ay=r.a[1],bx=r.b[0],by=r.b[1],RL=Math.hypot(bx-ax,by-ay),rx=(bx-ax)/RL,ry=(by-ay)/RL,nx=-ry,ny=rx;
+    const off=(ex-ax)*nx+(ey-ay)*ny,along=(ex-ax)*rx+(ey-ay)*ry;if(along<-20||along>RL+20||Math.abs(off)>120||Math.abs(off)<8)continue;
+    const toward=-(ux*nx+uy*ny)*Math.sign(off);if(toward<.35)continue;const t=Math.abs(off)/toward;if(t>170)continue;
+    out.push([ex,ey,ex+ux*t,ey+uy*t]);break}}
+  return out};
+ const _g=geoOf;geoOf=function(k){const fresh=!GEO[k],g=_g(k);if(fresh){try{for(const s of stubs(k)){g.tx.moveTo(s[0]/NM,s[1]/NM);g.tx.lineTo(s[2]/NM,s[3]/NM)}}catch(e){}}return g}}
