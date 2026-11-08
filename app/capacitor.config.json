@@ -1,0 +1,6 @@
+{
+  "appId": "de.atcsimulator.app",
+  "appName": "ATC Simulator",
+  "webDir": "www",
+  "ios": { "contentInset": "never", "backgroundColor": "#060b14" }
+}

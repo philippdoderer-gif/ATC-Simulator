@@ -1,0 +1,16 @@
+{
+  "name": "atc-simulator-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "sync": "cp ../index.html ../manifest.webmanifest ../icon-192.png ../icon-512.png www/ && npx cap sync",
+    "ios": "npm run sync && npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/ios": "^6.1.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.0"
+  }
+}
