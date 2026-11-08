@@ -847,7 +847,7 @@ function aviaText(s){s=s.replace(/⚠/g,'');
  s=s.replace(/\bFL\s?(\d{2,3})\b/g,(m,n)=>'flight level '+DS(n));
  s=s.replace(/\b([A-Z])(\d{1,3})([A-Z]?)\b/g,(m,l,n,x)=>NATO[l]+' '+DS(n)+(x?' '+NATO[x]:''));
  s=s.replace(/\b(\d{1,3})([A-Z])\b/g,(m,n,l)=>DS(n)+' '+NATO[l]);
- s=s.replace(/\b([A-Z])\b/g,(m,l)=>NATO[l]);
+ s=s.replace(/\b([A-HJ-Z])\b/g,(m,l)=>NATO[l]);
  s=s.replace(/\b(squawk|QNH|heading|hdg|runway|rwy)\s*(\d+)/gi,(m,w,n)=>w+' '+DS(n));
  s=s.replace(/\b(\d{1,2})(\d)00\b/g,(m,t,h)=>DS(t)+' thousand'+(+h?' '+DS(h)+' hundred':''));
  s=s.replace(/\b(\d+)\s?(kt|kts|knots)\b/gi,(m,n)=>DS(n)+' knots');
@@ -968,8 +968,8 @@ const _bm2=buildMenu;buildMenu=function(){_bm2();let h='';for(const k of Object.
 (()=>{for(const k of ['MUC','FRA','LHR']){const e=$('n'+k);if(e)e.textContent=DATA[k].st.length}})();
 
 // --- phonetic alphabet in displayed radio calls, and the controller's "readback correct"
-(function(){const _s=say;say=function(t,k){if(k==='plt'||k==='atc')t=t.replace(/(^|[ ,(])([A-Z])(?=[ ,.)]|$)/g,(m,p,l)=>p+NATO[l]);_s(t,k)};
- const _a=atc;atc=function(a,t,r){if(a.rbp&&!a.sqr&&!/^negative/i.test(t)){t='readback correct, '+t}a.rbp=false;_a(a,t,r);if(r!==null)setTimeout(()=>{a.rbp=!a.sqr},700)}})();
+(function(){const _s=say;say=function(t,k){if(k==='plt'||k==='atc')t=t.replace(/(^|[ ,(])([A-HJ-Z])(?=[ ,.)]|$)/g,(m,p,l)=>p+NATO[l]);_s(t,k)};
+ const _a=atc;atc=function(a,t,r){if(a.rbp&&!a.sqr&&!/^negative/i.test(t)){t='readback correct, '+t}a.rbp=false;_a(a,t,r);if(r!==null)setTimeout(()=>{a.rbp=!a.sqr&&!a.rbw},700)}})();
 // ===================== v11: realistic arrival flow (staggered, wake-aware, holding) =====================
 const SC={arr:1,dep:1,name:'Standard'};
 const ARRCAP=()=>Math.round((IPAD()?9:7)*(SC.arr>1.2?1.3:1));
@@ -1019,6 +1019,59 @@ setInterval(()=>{try{vehButtons()}catch(e){}},500);
 for(const d of CM){if(['lu','to','land','cto'].includes(d.id)&&d.m.includes('T')){const f=d.f;d.f=function(a,g){if(a.rw&&vehOn(a.rw)&&d.id!=='cto'){say('Runway '+a.rw+' is occupied by an airport vehicle','sys');score-=25;viol++;return}return f.call(this,a,g)}}}
 // vehicle marker on the map
 {const _dv=draw;draw=function(){_dv();if(VEH.st!==2)return;try{const R=RW[VEH.rw],W=cv.clientWidth,dpr=devicePixelRatio||1,k=W/2/view.r,c=W/2,fr=Math.min(1,(T-(VEH.until-240))/240),x=R.T0.x+R.dir[0]*1.8*Math.abs(Math.sin(fr*Math.PI*2)),y=R.T0.y+R.dir[1]*1.8*Math.abs(Math.sin(fr*Math.PI*2));cx.save();cx.setTransform(dpr,0,0,dpr,0,0);cx.fillStyle='#ffb454';cx.strokeStyle='#000';cx.lineWidth=1;cx.beginPath();cx.arc(c+(x-view.x)*k,c-(y-view.y)*k,4,0,7);cx.fill();cx.stroke();cx.restore()}catch(e){}}}
+// ===================== v12: live weather, runway choice by wind, crosswind / tailwind limits =====================
+const LIVE={},ICAO3={EDDM:'MUC',EDDF:'FRA',EGLL:'LHR'};
+function parseMetar(o){try{const wd=typeof o.wdir==='number'?o.wdir:null,ws=+o.wspd||0;let vis=o.visib;vis=vis==null?10:(typeof vis==='string'?parseFloat(vis):vis);vis=Math.min(10,vis*1.609);
+ let cld='CAVOK';const cl=(o.clouds||[]).filter(c=>c.base!=null&&/BKN|OVC|SCT|FEW/.test(c.cover)),pri=cl.find(c=>/BKN|OVC/.test(c.cover))||cl[0];if(pri)cld=pri.cover+' '+Math.round(pri.base/100)*100+'FT';
+ return{wd:wd==null?null:wd,ws,vis:Math.max(.2,vis),cld,t:o.temp,q:o.altim?Math.round(o.altim):null,raw:o.rawOb||''}}catch(e){return null}}
+async function prefetchWx(){try{const c=new AbortController(),t=setTimeout(()=>c.abort(),6000);const r=await fetch('https://aviationweather.gov/api/data/metar?ids=EDDM,EDDF,EGLL&format=json',{signal:c.signal});clearTimeout(t);if(!r.ok)return;const L=await r.json();for(const o of L){const k=ICAO3[o.icaoId];if(k){const p=parseMetar(o);if(p&&p.wd!=null)LIVE[k]=p}}}catch(e){}}
+prefetchWx();setInterval(prefetchWx,600000);
+let LIVEWX=true;try{LIVEWX=localStorage.getItem('atc_live')!=='0'}catch(e){}
+(()=>{const st=$('start');if(!st)return;const l=document.createElement('label');l.className='lvx';l.innerHTML='<input type="checkbox" id="liveWx"> Use live weather (real METAR) <small id="liveSt"></small>';st.before(l);const c=$('liveWx');c.checked=LIVEWX;c.onchange=()=>{LIVEWX=c.checked;try{localStorage.setItem('atc_live',c.checked?'1':'0')}catch(e){}};
+ setInterval(()=>{const e=$('liveSt');if(e)e.textContent=Object.keys(LIVE).length?'· available':'· not reachable, simulated'},2000);
+ const s=document.createElement('style');s.textContent='.lvx{display:flex;gap:8px;align-items:center;margin:10px 0;font-size:14px;color:var(--fg)}.lvx small{color:var(--dim)}';document.head.appendChild(s)})();
+// pick the runway direction that fits the wind
+{const _init=init;init=function(){const live=LIVEWX&&!NET.client&&LIVE[selAp];let ff=null;
+  if(live&&!FORCEFLOW){let best=null,bd=999;for(const k of Object.keys(AP[ap||selAp].F)){const d=Math.abs(dif(live.wd,parseInt(AP[ap||selAp].F[k][1][0])*10));if(d<bd){bd=d;best=k}}FORCEFLOW=best;ff=best}
+  _init();if(ff)FORCEFLOW=null;
+  if(live&&WX){WX.wd=live.wd;WX.ws=Math.max(1,live.ws);WX.vis=live.vis;WX.cld=live.cld;if(live.t!=null)WX.t=live.t;if(live.q)WX.q=live.q;ATIS.s={wd:WX.wd,ws:WX.ws,q:WX.q,vis:WX.vis,cld:WX.cld,t:WX.t};WX.live=1;try{newTarget()}catch(e){}
+   setTimeout(()=>say('Live weather loaded: '+(live.raw||'METAR')+' – runway direction chosen by the wind.','sys'),800)}}}
+// crosswind / tailwind on final: gusts can force go-arounds; periodic advisory
+{const _step=step;step=function(dt){_step(dt);if(NET.client)return;
+  for(const a of ac){if(a.ph==='air'&&!a.dep&&a.ils&&!a.xwChk&&a.rw&&RW[a.rw]){const R=RW[a.rw],d=Math.hypot(a.x-R.T0.x,a.y-R.T0.y);if(d<1.3){a.xwChk=1;const xw=Math.abs(WX.ws*SIN(WX.wd-R.h)),tw=-WX.ws*COS(WX.wd-R.h),p=Math.max((xw-26)/18,(tw-8)/9,0);if(Math.random()<p){goAround(a);say(rc(a)+': going around, '+(tw>8?'tailwind '+Math.round(tw)+' kt':'crosswind '+Math.round(xw)+' kt')+' above limits','plt')}}}}
+  if(!WXA.t||T-WXA.t>900){WXA.t=T;const R=RW[FLW[1][0]];if(R){const xw=Math.abs(WX.ws*SIN(WX.wd-R.h)),tw=-WX.ws*COS(WX.wd-R.h);if(xw>24||tw>6){say('⚠ Wind check for runway '+FLW[1][0]+': '+(tw>6?'tailwind '+Math.round(tw)+' kt – ':'')+(xw>24?'crosswind '+Math.round(xw)+' kt – ':'')+'expect go-arounds'+(tw>6?'; a runway change is advisable':''),'sys')}}}}}
+const WXA={t:0};
+// ===================== v13: radio realism – wrong read-backs, standby, pilot requests =====================
+const RBP=.09;REQL.dev='WX';REQL.dreq='DCT';HINT.dev='Weather deviation request: "Approve deviation" or "Negative". Cells are marked red on the radar.';HINT.dreq='Direct request: "Approve direct" if nothing is in the way.';
+function mutateRb(s){const o=[];
+ let m=s.match(/(heading |hdg )(\d{3})/);if(m){const h=+m[2],n=((h+[-20,-10,10,20][Math.random()*4|0])+360)%360||360;o.push({s:s.replace(m[0],m[1]+String(n).padStart(3,'0')),kind:'hdg',val:n})}
+ m=s.match(/FL(\d{2,3})/);if(m){const v=+m[1]+[-20,-10,10,20][Math.random()*4|0];o.push({s:s.replace(m[0],'FL'+v),kind:'alt',val:v*100})}
+ m=s.match(/(\d{4,5}) (feet|ft)/);if(m){const v=+m[1]+[-1000,1000][Math.random()*2|0];if(v>=1000)o.push({s:s.replace(m[0],v+' '+m[2]),kind:'alt',val:v})}
+ m=s.match(/\b(\d{3})\.(\d{2,3})\b/);if(m){const d=m[2],nd=d.slice(0,-1)+((+d.slice(-1)+5)%10);o.push({s:s.replace(m[0],m[1]+'.'+nd),kind:'frq'})}
+ m=s.match(/QNH (\d{4})/);if(m){o.push({s:s.replace(m[0],'QNH '+(+m[1]+[-2,2][Math.random()*2|0])),kind:'qnh'})}
+ m=s.match(/runway (\d{2})([LR])/);if(m){o.push({s:s.replace(m[0],'runway '+m[1]+(m[2]==='L'?'R':'L')),kind:'rwy'})}
+ return o.length?o[Math.random()*o.length|0]:null}
+{const _a=atc;atc=function(a,t,r){if(r!==null&&!NET.client&&!/^negative/i.test(t)&&!a.sqr&&!a.rbw&&!a.nomut&&Math.random()<RBP){const base=(r||t),w=mutateRb(base);if(w){a.rbw={t,orig:base,kind:w.kind,val:w.val,due:T+28,said:w.s};r=w.s}}a.nomut=0;_a(a,t,r)}}
+def('G','Information','rbneg',()=>'Negative – I say again (wrong read-back)',a=>one(O(a)&&a.rbw),a=>{const w=a.rbw;a.rbw=null;a.nomut=1;score+=4;atc(a,'negative, I say again: '+w.t,w.orig)});
+def('T','Information','rbneg',()=>'Negative – I say again (wrong read-back)',a=>one(O(a)&&a.rbw),a=>{const w=a.rbw;a.rbw=null;a.nomut=1;score+=4;atc(a,'negative, I say again: '+w.t,w.orig)});
+def('C','Information','rbneg',()=>'Negative – I say again (wrong read-back)',a=>one(O(a)&&a.rbw),a=>{const w=a.rbw;a.rbw=null;a.nomut=1;score+=4;atc(a,'negative, I say again: '+w.t,w.orig)});
+// standby: resets the "no reply" timers of a pending request
+for(const m of['G','T','C'])def(m,'Information','stby',()=>'Standby',a=>one(O(a)&&a.req&&(a.sb||0)<3),a=>{a.sb=(a.sb||0)+1;a.t=Math.min(a.t,0);a.xwait=0;atc(a,'standby','standing by')});
+// pilot-initiated requests
+for(const m of['C'])def(m,'Information','devok',()=>'Approve weather deviation',a=>one(O(a)&&a.req==='dev'),a=>{const c=cellNear(a);let h=a.hdg;if(c){const away=brg(a.x-c.x,a.y-c.y),s=dif(a.hdg,away)>=0?1:-1;h=nrm(away+s*55)}a.th=Math.round(h)%360;a.dct=null;a.req=null;a.devHold=T+240;score+=3;atc(a,'deviation approved, turn '+(dif(a.th,a.hdg)<0?'left':'right')+' heading '+pad(a.th||360,3)+', report clear of weather','deviating, heading '+pad(a.th||360,3)+', will report clear')});
+def('C','Information','devno',()=>'Negative – unable deviation',a=>one(O(a)&&a.req==='dev'),a=>{a.req=null;a.devd=2;atc(a,'unable deviation, maintain heading','unable, maintaining heading, will keep an eye on it')});
+def('C','Information','dreqok',()=>'Approve direct',a=>one(O(a)&&a.req==='dreq'&&a.ex&&WP[a.ex[0]]),a=>{a.dct=WP[a.ex[0]].slice();a.cleared=false;a.orb=0;a.req=null;score+=2;atc(a,'proceed direct '+a.ex[0],'direct '+a.ex[0])});
+def('C','Information','dreqno',()=>'Negative – continue as filed',a=>one(O(a)&&a.req==='dreq'),a=>{a.req=null;atc(a,'negative, continue on present routing','continue present routing')});
+function cellNear(a){let b=null,bd=1e9;for(const c of CELLS){const d=Math.hypot(c.x-a.x,c.y-a.y);if(d<bd){bd=d;b=c}}return b}
+{const _step=step;step=function(dt){_step(dt);if(NET.client)return;
+ for(const a of ac){
+  if(a.rbw&&T>=a.rbw.due){const w=a.rbw;a.rbw=null;score-=8;viol+=0;if(w.kind==='hdg'&&!a.ils&&a.ph==='air'){a.th=w.val%360;a.dct=null}else if(w.kind==='alt'&&a.ph==='air'&&!a.ils)a.ta=Math.max(1000,w.val);say('⚠ '+a.cs+' read back "'+w.said+'" – wrong read-back not corrected (−8)','sys')}
+  if(a.ph!=='air'||a.ils||a.req||a.ctrl!=='C'||!HS('C'))continue;
+  if(!a.devd&&CELLS.length&&!a.ovf){const c=cellNear(a);if(c&&Math.hypot(c.x-a.x,c.y-a.y)<c.r+9&&Math.abs(dif(brg(c.x-a.x,c.y-a.y),a.hdg))<50){a.devd=1;a.devT=T;ask(a,'dev','request deviation around weather.')}}
+  if(a.dep&&a.dreqw===undefined)a.dreqw=Math.random()<.25;
+  if(a.dep&&a.dreqw&&!a.dreqd&&a.alt>7000&&a.ex&&WP[a.ex[0]]&&!a.dct&&Math.random()<.01){a.dreqd=1;ask(a,'dreq','request direct '+a.ex[0]+'.')}}
+ for(const a of ac){if(a.req==='dev'&&T-a.devT>70){a.req=null;const c=cellNear(a);if(c){const away=brg(a.x-c.x,a.y-c.y),s=dif(a.hdg,away)>=0?1:-1;a.th=Math.round(nrm(away+s*55))%360}score-=3;say(rc(a)+': deviating around weather on own initiative, heading '+pad(a.th||360,3),'plt')}
+  if(a.req==='dreq'&&T-(a.dreqT||(a.dreqT=T))>120){a.req=null}}}}
 
 // ===================== multiplayer (room capability) =====================
 const LOCALCMD=new Set(['tb','tv','tu','tx','info','batch']);
