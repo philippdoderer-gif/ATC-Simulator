@@ -696,8 +696,8 @@ function ui(){$('sc').textContent=score;$('ln').textContent=land;$('dp').textCon
  const sg=sel?[sel.id,sel.ph,sel.ctrl,sel.cleared,sel.clr,sel.need,infoOpen,sel.req,sel.su,sel.stop,sel.vx,sel.gw,sel.rc,sel.cont,sel.ils,sel.orb,!!sel.dct,sel.pend?sel.pend.length:0,BATCH,sel.dl,sel.cl,GF,sel.ta,sel.ab,sel.lv,sel.dh,!!xAhead(sel),sel.ph==='air'&&!sel.dep?vacCands(sel).length:0,sel.alt>300,sel.alt>=9500,sel.tb?sel.tb.steps.map(q=>q.nm).join('>')+'#':''].join():'';if(sg!==psig){psig=sg;panel()}refresh()}
 function panel(){const a=sel,e=$('ctl');if(!a){e.innerHTML='<div class="small">Tap an aircraft or a strip to see its commands.</div>';return}
  const B=(c,t,on)=>`<button data-c="${c}" ${on?'class="on"':''}>${t}</button>`;
- let h=`<div class="row"><b style="color:var(--sel);font-size:15px">${a.cs}</b><span class="small">${a.ovf?'Overflight':a.dep?'Departure':'Arrival'} · ${a.ph==='parked'?'parked, STD '+hm(a.sched):a.ph} · ${OWN[a.ctrl]}${a.req?' · <span style="color:var(--amb)">'+REQL[a.req]+'</span>':''}</span>${B('info','Flight info '+(infoOpen||(IPAD()&&!matchMedia("(pointer:coarse)").matches)?'▴':'▾'))}${B('batch','Confirm mode: '+(BATCH?'ON':'off'),BATCH)}</div>`;
- if(infoOpen||(IPAD()&&!matchMedia("(pointer:coarse)").matches)){const route=a.ovf?`via ${a.ex[0]} · FL${a.fl}`:a.dep?`${A.icao} ${a.rw} ${a.ex[0]} DCT ${a.code} FL${a.fl}`:`${a.code} DCT ${a.fix} ${A.icao} ILS ${a.rw}`;
+ let h=`<div class="row"><b style="color:var(--sel);font-size:15px">${a.cs}</b><span class="small">${a.ovf?'Overflight':a.dep?'Departure':'Arrival'} · ${a.ph==='parked'?'parked, STD '+hm(a.sched):a.ph} · ${OWN[a.ctrl]}${a.req?' · <span style="color:var(--amb)">'+REQL[a.req]+'</span>':''}</span>${B('info','Flight info '+(infoOpen||IPAD()?'▴':'▾'))}${B('batch','Confirm mode: '+(BATCH?'ON':'off'),BATCH)}</div>`;
+ if(infoOpen||IPAD()){const route=a.ovf?`via ${a.ex[0]} · FL${a.fl}`:a.dep?`${A.icao} ${a.rw} ${a.ex[0]} DCT ${a.code} FL${a.fl}`:`${a.code} DCT ${a.fix} ${A.icao} ILS ${a.rw}`;
   h+=`<div class="info"><span>Aircraft</span><span>${a.type} · ${a.radio}</span><span>${a.dep?'To':'From'}</span><span>${a.city} (${a.code})</span><span>Plan</span><span>${route}</span><span>${a.dep?'STD':'STA'}</span><span>${hm(a.sched)}</span><span>Stand</span><span>${a.gate.n}</span><span>ATIS</span><span>information ${a.info}${a.need?' (outdated)':''}</span><span>Now</span><span id="nw"></span></div>`}
  
  if(a.tb)h+=`<div class="small" style="margin-top:6px;color:#e879f9">Taxi route: ${a.tb.steps.length?a.tb.steps.map(q=>q.nm).join(' → '):'pick the first taxiway'} – then pick ${a.dep?'a holding point':'the stand'}.</div>`;
@@ -1477,53 +1477,13 @@ let HOSTSEEN=0;setInterval(()=>{if(!NET.on||!NET.client||!(NET.gameOn||NET.ready
  if(HOSTSEEN&&Date.now()-HOSTSEEN>8000&&!$('hostGone')){const d=document.createElement('div');d.id='hostGone';d.innerHTML='The host has left or lost connection. The game is paused for you. <button id="hgL">Leave session</button>';d.style.cssText='position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:90;background:#2a1118;border:1px solid var(--warn);color:var(--fg);padding:10px 14px;border-radius:14px;max-width:90vw;font-size:14px';document.body.appendChild(d);$('hgL').onclick=()=>{d.remove();mpLeave();$('game').hidden=true;$('menu').hidden=false}}},2000);
 // spectator badge
 setInterval(()=>{if(!NET.spec||$('game').hidden)return;const t=$('ttl');if(t&&!/Spectator/.test(t.textContent))t.textContent='👁 Spectator · '+t.textContent},1000);
-// ===================== v17: tablet (iPad) layout: fixed full-screen app, no page scrolling =====================
-(()=>{const R=document.querySelector('#game .right');if(R&&!$('colA')){const A=document.createElement('div'),B=document.createElement('div');A.id='colA';B.id='colB';
- const ids=['ctrb','coach','ctl','atisBox','team'];const kids=[...R.children];R.prepend(A,B);for(const k of kids){if(k.id==='help')continue;(ids.includes(k.id)?A:B).appendChild(k)}
- const st0=document.createElement('style');st0.textContent='#colA,#colB{display:contents}';document.head.appendChild(st0)}
- const st=document.createElement('style');st.textContent=`
-@media(min-width:820px) and (pointer:coarse){
- html,body{overscroll-behavior:none}
- #game:not([hidden]){display:flex;flex-direction:column;height:calc(100dvh - 24px);padding:6px 10px 8px;box-sizing:border-box;overflow:hidden}
- #game .bar{flex:0 0 auto;flex-wrap:nowrap;white-space:nowrap;overflow-x:auto;gap:6px;margin:0 0 6px;scrollbar-width:none}
- #game .bar::-webkit-scrollbar{display:none}
- #game .bar button{flex:0 0 auto;min-height:44px;padding:8px 13px;font-size:15px}#game .bar #ttl{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
- #game .hud{flex:0 0 auto;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:0 0 6px}#game .hud>div{padding:3px 10px}#game .hud b{font-size:17px}#game .hud #clk{white-space:nowrap;font-size:13px!important}
- #game .gwrap{flex:1 1 auto;min-height:0;display:grid;gap:8px;grid-template-columns:minmax(0,1.45fr) minmax(360px,1fr);grid-template-rows:minmax(0,1fr)}
- #game .left{min-height:0;height:100%}
- #game .left{display:flex;align-items:center;justify-content:center;background:#050c17;border-radius:18px}canvas#cv{aspect-ratio:auto!important}
- #game .right{display:flex;flex-direction:column;gap:8px;min-height:0;height:100%;overflow:hidden}
- #game .right .panel{min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
- #ctrb{flex:0 1 36%}#coach{flex:0 0 auto}
- #ctl{flex:1 1 40%;max-height:none!important}
- #game .panel:has(#strips){flex:0 1 18%}
- #seq{flex:0 1 11%}
- #game .panel:has(#log){flex:0 0 94px;padding:6px 10px}#log{height:100%!important}
- #game .right #help{display:none}
- .cb button,.strip,#seq .sq{min-height:40px}.cb button{font-size:14px;padding:9px 12px}.strip{display:flex;align-items:center}
- #seq .sq{min-height:30px}
- #atisBox:not([hidden]){position:fixed;z-index:80;left:50%;top:80px;transform:translateX(-50%);width:min(480px,92vw);max-height:70dvh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.7);background:#0c1626}
- .zb button{width:52px;height:52px;font-size:24px}
-}
-@media(min-width:820px) and (pointer:coarse) and (orientation:portrait){
- #game .gwrap{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,52%) minmax(0,1fr)}
- #game .left{grid-row:1}
- #game .right{grid-row:2;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;overflow:hidden}
- #colA,#colB{display:flex;flex-direction:column;gap:8px;min-height:0;overflow-y:auto;overscroll-behavior:contain}
- #colA>.panel{flex:0 0 auto;max-height:none}#ctl{flex:1 0 auto!important}
- #colB>.panel{flex:0 0 auto}#colB>.panel:has(#strips){flex:1 1 40%!important;min-height:120px}#colB>.panel:has(#log){flex:0 0 110px!important}#colB #seq{flex:0 0 auto!important;max-height:30%}
-}`;document.head.appendChild(st);
- // iOS: prevent double-tap zoom & pinch of the page itself (map handles its own gestures)
- document.addEventListener('gesturestart',e=>e.preventDefault());
- let lt=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-lt<300&&!/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))e.preventDefault();lt=n},{passive:false});
- // the map bitmap is square -> size the canvas as a square that fits the available area (never stretch)
- const fitCv=()=>{try{const g=$('game');if(g.hidden)return;const L=cv.parentNode;const touch=matchMedia('(pointer:coarse)').matches,small=innerWidth<820;
-  if(!(small||touch&&innerWidth>=820)){cv.style.width=cv.style.height='';return}
-  cv.style.width=cv.style.height='0px';const r=L.getBoundingClientRect();let w=L.clientWidth,h;
-  if(small){const R=document.querySelector('#game .right').getBoundingClientRect();h=R.top-r.top-4}else h=L.clientHeight;
-  const s=Math.max(180,Math.floor(Math.min(w,h)));cv.style.width=cv.style.height=s+'px'}catch(e){}};
- setInterval(fitCv,400);window.addEventListener('resize',fitCv);
- const fit=()=>{try{window.dispatchEvent(new Event('resize'))}catch(e){}};window.addEventListener('orientationchange',()=>setTimeout(fit,250));
+// ===================== v17: phone helper: square map canvas that fits above the bottom sheet (tablets keep the original scrolling layout) =====================
+(()=>{
+ const fitCv=()=>{try{const g=$('game');if(g.hidden)return;const L=cv.parentNode;
+  if(innerWidth>=820){cv.style.width=cv.style.height='';return}
+  cv.style.width=cv.style.height='0px';const r=L.getBoundingClientRect();const R=document.querySelector('#game .right').getBoundingClientRect();
+  const s=Math.max(180,Math.floor(Math.min(L.clientWidth,R.top-r.top-4)));cv.style.width=cv.style.height=s+'px'}catch(e){}};
+ setInterval(fitCv,400);window.addEventListener('resize',fitCv);window.addEventListener('orientationchange',()=>setTimeout(fitCv,250));
 })();
 // ===================== v18: Center compass rose around the selected aircraft =====================
 {const _d=draw;draw=function(){_d();if(MODE!=='C'||!sel||sel.ph!=='air'||!vis(sel))return;
